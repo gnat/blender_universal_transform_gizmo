@@ -15,7 +15,7 @@ def preferences(context):
 	return addon.preferences if addon else _Defaults()
 
 class _Defaults:
-	size = 1.5
+	size = 1.2
 	opacity = 0.9
 	color_center = (0.96, 0.96, 0.96)
 	color_hover = (1.0, 0.52, 0.12)
@@ -29,7 +29,7 @@ class _Defaults:
 	plane_offset = 0.44
 	arc_radius = 0.96
 	screen_radius = 1.15
-	center_radius = 0.16
+	center_radius = 0.18
 	scale_orientation = 'FOLLOW'
 	orientation = 'FOLLOW'
 	readout = True
