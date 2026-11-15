@@ -70,7 +70,7 @@ def plane(offset, size, signs=(1,1)):
 				for x,y in ((-1,-1),(1,-1),(1,1),(-1,1))]
 	return segments(corners, True), [corners[i] for i in (0,1,2,0,2,3)]
 
-def dot(radius=0.045):
+def dot(radius=0.06):
 	points = circle(radius, count=32)
 	return [], [v for a,b in zip(points, points[1:]) for v in ((0,0,0),a,b)]
 
