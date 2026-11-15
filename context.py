@@ -61,9 +61,9 @@ def pivot(context, items=None):
 		return Vector(tuple((min(p[i] for p in points) + max(p[i] for p in points)) / 2 for i in range(3)))
 	return sum(points, Vector()) / len(points)
 
-def orientation(context, requested='FOLLOW'):
+def orientation(context):
 	slot = context.scene.transform_orientation_slots[0]
-	name = slot.type if requested == 'FOLLOW' else requested
+	name = slot.type
 	ob = context.active_object
 	if name == 'GLOBAL' or ob is None:
 		return 'GLOBAL', Matrix.Identity(3)
@@ -71,7 +71,7 @@ def orientation(context, requested='FOLLOW'):
 		return name, view_basis(context)
 	if name == 'CURSOR':
 		return name, context.scene.cursor.matrix.to_quaternion().to_matrix()
-	if slot.custom_orientation and requested == 'FOLLOW':
+	if slot.custom_orientation:
 		return name, slot.custom_orientation.matrix.copy()
 	local = ob.matrix_world.to_quaternion().to_matrix()
 	if name == 'NORMAL' and context.mode == 'EDIT_MESH':

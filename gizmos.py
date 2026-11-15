@@ -84,7 +84,7 @@ class UTG_GT_handle(bpy.types.Gizmo):
 		self.use_draw_modal = True
 		self.use_draw_scale = False
 		self.use_draw_offset_scale = False
-		self.use_event_handle_all = True
+		self.use_event_handle_all = False
 		self.use_tooltip = True
 
 	def draw(self, context):
@@ -97,8 +97,9 @@ class UTG_GT_handle(bpy.types.Gizmo):
 		if active and p.fade_inactive and not selected:
 			alpha *= 0.22
 		width = p.line_width + (0.7 if selected else 0)
-		if self.kind == 'SCALE' and self.axis < 0:
-			width *= 1.5
+		if self.axis < 0:
+			if self.kind == 'SCALE':
+				width = p.center_line_width + (0.7 if selected else 0)
 			_capture_screen_control(self,context,color,alpha,width)
 			return
 		matrix = self.matrix_basis
@@ -162,6 +163,15 @@ class UTG_GT_handle(bpy.types.Gizmo):
 						return 0
 		return -1
 
+	def modal(self, context, event, tweak):
+		active = interaction.current(context)
+		if active:
+			active.record_event(event)
+		return {'RUNNING_MODAL'}
+
+	def exit(self, context, cancel):
+		interaction.shutdown()
+
 def _matrix(center, basis, scale):
 	matrix = basis.to_4x4()
 	matrix.translation = center
@@ -190,6 +200,10 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 
 	@classmethod
 	def poll(cls, context):
+		return cls.available(context) and settings.handles_visible(context)
+
+	@classmethod
+	def available(cls, context):
 		if not getattr(context.window_manager, 'universal_gizmo_enabled', False):
 			return False
 		if context.mode not in {'OBJECT', 'EDIT_MESH'} or not context.active_object:
@@ -238,8 +252,8 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				gz.hide = True
 			return
 		scale = pixel * context.preferences.view.gizmo_size * p.size
-		_, move_basis = ctx.orientation(context, p.orientation)
-		_, scale_basis = ctx.orientation(context, p.scale_orientation)
+		_, move_basis = ctx.orientation(context)
+		scale_basis = move_basis
 		view_basis = ctx.view_basis(context)
 		if active:
 			move_basis = active.draw_move_basis
@@ -278,7 +292,7 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				gz.base_alpha = p.opacity
 				gz.matrix_basis = _matrix(center, basis, scale)
 				if kind == 'MOVE':
-					gz.lines, gz.tris = geometry.dot()
+					gz.lines, gz.tris = geometry.dot(p.center_dot_radius)
 				elif kind == 'SCALE':
 					gz.lines, gz.tris = geometry.segments(geometry.circle(p.center_radius)), []
 				else:

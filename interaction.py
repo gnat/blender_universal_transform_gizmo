@@ -15,7 +15,6 @@ from . import context as ctx, settings
 
 _SESSION = None
 _DRAW = []
-NATIVE = {'MOVE': 'TRANSFORM_OT_translate', 'ROTATE': 'TRANSFORM_OT_rotate', 'SCALE': 'TRANSFORM_OT_resize'}
 
 def current(context=None):
 	s = _SESSION
@@ -48,10 +47,9 @@ class Session:
 		self.items = ctx.selection(context)
 		self.center = ctx.pivot(context, self.items)
 		p = settings.preferences(context)
-		self.draw_move_basis = ctx.orientation(context, p.orientation)[1]
-		self.draw_scale_basis = ctx.orientation(context, p.scale_orientation)[1]
-		request = p.scale_orientation if kind == 'SCALE' and axis >= 0 else p.orientation
-		self.orient, self.basis = ctx.orientation(context, request)
+		self.orient, self.basis = ctx.orientation(context)
+		self.draw_move_basis = self.basis.copy()
+		self.draw_scale_basis = self.basis.copy()
 		self.view_basis = ctx.view_basis(context)
 		if axis < 0:
 			self.orient, self.basis = 'VIEW', self.view_basis.copy()
@@ -92,9 +90,6 @@ class Session:
 	@property
 	def display_center(self):
 		return self.center + self.delta if self.kind == 'MOVE' else self.center
-
-	def native_running(self):
-		return any(op.bl_idname == NATIVE[self.kind] for op in self.window.modal_operators)
 
 	def record_event(self, event):
 		if event.value != 'PRESS' or event.ctrl or event.alt:
@@ -175,7 +170,7 @@ class Session:
 def _draw_text():
 	context = bpy.context
 	s = current(context)
-	if s is None or not settings.preferences(context).readout:
+	if s is None:
 		return
 	try:
 		anchor = view3d_utils.location_3d_to_region_2d(s.region, context.region_data, s.display_center)
@@ -201,7 +196,7 @@ def _draw_text():
 def _draw_pie():
 	context = bpy.context
 	s = current(context)
-	if s is None or s.kind != 'ROTATE' or not settings.preferences(context).pie_preview:
+	if s is None or s.kind != 'ROTATE':
 		return
 	blend,depth = gpu.state.blend_get(),gpu.state.depth_test_get()
 	try:
@@ -219,7 +214,7 @@ def _draw_pie():
 		with gpu.matrix.push_pop(),gpu.matrix.push_pop_projection():
 			gpu.matrix.load_matrix(context.region_data.view_matrix)
 			gpu.matrix.load_projection_matrix(context.region_data.window_matrix)
-			_draw_batch('TRIS', verts, (*p.color_hover, p.pie_alpha))
+			_draw_batch('TRIS', verts, (*p.color_hover, 0.8))
 			_draw_batch('LINES', lines, (*p.color_hover, 0.95), p.line_width)
 	finally:
 		gpu.state.blend_set(blend)
@@ -263,60 +258,17 @@ def prepare(context, gizmo):
 		props.orient_axis = 'XYZ'[s.axis] if s.axis >= 0 else 'Z'
 	_start_draw()
 
-	def attach():
+	def check_start():
 		if current() is not s or s.stopped:
 			return None
-		if not s.native_running():
-			shutdown()
-			return None
 		try:
-			with bpy.context.temp_override(window=s.window, area=s.area, region=s.region):
-				bpy.ops.view3d.universal_gizmo_observer('INVOKE_DEFAULT')
-		except (ReferenceError, RuntimeError):
+			running = gizmo.is_modal
+		except ReferenceError:
+			running = False
+		if not running:
 			shutdown()
 		return None
 
-	bpy.app.timers.register(attach, first_interval=0.001)
+	bpy.app.timers.register(check_start, first_interval=0.001)
 
-class UTG_OT_observer(bpy.types.Operator):
-	bl_idname = 'view3d.universal_gizmo_observer'
-	bl_label = 'Universal Gizmo Readout'
-	bl_description = 'Observe a native gizmo transform without modifying input or selection'
-	bl_options = {'INTERNAL'}
-	_timer = None
-	_session = None
-
-	@classmethod
-	def poll(cls, context):
-		return current(context) is not None
-
-	def invoke(self, context, event):
-		self._session = current(context)
-		self._timer = context.window_manager.event_timer_add(1 / 30, window=context.window)
-		context.window_manager.modal_handler_add(self)
-		return {'RUNNING_MODAL'}
-
-	def modal(self, context, event):
-		s = self._session
-		if s is None or s.stopped or not s.native_running():
-			self._finish(context)
-			return {'FINISHED'}
-		s.record_event(event)
-		if event.type == 'TIMER':
-			try:
-				s.area.tag_redraw()
-			except (ReferenceError, RuntimeError):
-				self._finish(context)
-				return {'FINISHED'}
-		return {'PASS_THROUGH'}
-
-	def _finish(self, context):
-		if self._timer is not None:
-			context.window_manager.event_timer_remove(self._timer)
-			self._timer = None
-		shutdown()
-
-	def cancel(self, context):
-		self._finish(context)
-
-CLASSES = (UTG_OT_observer,)
+CLASSES = ()
