@@ -4,7 +4,7 @@
 bl_info = {
 	"name": "Universal Transform Gizmo",
 	"author": "Nathaniel Sabanski",
-	"version": (1, 0, 0),
+	"version": (1, 1, 0),
 	"blender": (5, 2, 0),
 	"location": "3D View > Sidebar > Universal",
 	"description": "Improved universal transform gizmo",
