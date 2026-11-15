@@ -23,7 +23,7 @@ Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Get Extensions ➡️ In
 
 Universal Transform Gizmo will install and activate automatically. ✅
 
-<img width="778" height="364" alt="image" src="https://github.com/user-attachments/assets/0dee31dc-8397-4ce0-89b9-d4a914898dee" />
+<img width="778" height="364" alt="install2" src="https://github.com/user-attachments/assets/cdb1a3de-63a4-4dea-bc5e-78db5db3f61a" />
 
 ### Manual: Add to your extensions folder.
 
@@ -33,6 +33,7 @@ Copy the contained `blender_universal_transform_gizmo-main` to your extensions f
 
 * Windows: `%APPDATA%\Blender Foundation\Blender\5.3\extensions\user_default`
 * Linux: `~/.config/blender/5.3/extensions/user_default`
+* MacOS: `~/Library/Application Support/Blender/5.3/extensions/user_default`
 
 Rename from `blender_universal_transform_gizmo-main` to `universal_transform_gizmo`
 
@@ -40,9 +41,14 @@ Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Universal
 
 ## Usage.
 
+
 Toggle the sidebar to see the options.
 
 <img width="292" height="243" alt="arrow" src="https://github.com/user-attachments/assets/8d4f7170-6c2d-4416-8abe-798e475ef56e" />
+
+Quick hide.
+
+<img width="202" height="186" alt="toggle" src="https://github.com/user-attachments/assets/63c97733-6cc6-4cc6-a7d3-a5e74c5d7d91" />
 
 ## 📚️ Design References
 
