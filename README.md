@@ -6,7 +6,7 @@ Vastly improved transform gizmo (widget) for Blender 5.3+
 
 Design improvments inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-modeler), [MagicaCSG](https://www.patreon.com/c/magicavoxel), Unreal Engine!
 
-### 🎁 Features
+## 🎁 Features
 * One gizmo to rule them all. No need to switch between gizmo modes.
 * Gizmo handles always face the camera.
 * Both single and double sided location arrows supported.
@@ -21,7 +21,7 @@ Design improvments inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mod
 
 Enable it: Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Extra Tools for Viewport Header Menu ✅
 
-### Design References
+## Design References
 
 [SDF Modeler](https://sascha-rode.itch.io/sdf-modeler) by Sascha Rode
 
