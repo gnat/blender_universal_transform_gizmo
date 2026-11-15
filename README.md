@@ -2,7 +2,7 @@
 
 # Universal Transform Gizmo
 
-Vastly improved transform gizmo (widget) for Blender 5.3+
+Vastly improved transform gizmo (widget) for Blender 5.2+
 
 Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-modeler), [MagicaCSG](https://www.patreon.com/c/magicavoxel), Unreal Engine!
 
