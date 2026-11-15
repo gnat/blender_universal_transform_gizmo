@@ -1,0 +1,14 @@
+schema_version = "1.0.0"
+id = "universal_transform_gizmo"
+version = "1.0.0"
+name = "Universal Transform Gizmo"
+tagline = "Design improvments inspired by SDF Modeler, MagicaCSG, Unreal Engine!"
+maintainer = "Nathaniel Sabanski"
+website = "https://github.com/gnat/blender_universal_transform_gizmo"
+type = "add-on"
+tags = ["3D View", "Modeling", "User Interface"]
+blender_version_min = "5.3.0"
+license = ["SPDX:GPL-3.0-or-later"]
+
+[build]
+paths_exclude_pattern = ["__pycache__/", "*.pyc", "tests/", "dist/", ".git/", "*.blend", "*.blend1"]
