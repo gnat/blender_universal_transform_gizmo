@@ -15,28 +15,34 @@ Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mo
 
 ## 📥 Install
 
-📥 [Download current main from Github](https://github.com/gnat/blender_universal_transform_gizmo/archive/refs/heads/main.zip)
-
 ### Automatic: Install `.zip` directly.
 
-Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Install From Disk... ➡️ Choose the .zip
+📥 [Download current main from Github](https://github.com/gnat/blender_universal_transform_gizmo/archive/refs/heads/main.zip)
+
+Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Get Extensions ➡️ Install From Disk... ➡️ Choose the `.zip`
 
 Universal Transform Gizmo will install and activate automatically. ✅
 
-### Manual: Extract manually into your addons folder.
+<img width="778" height="364" alt="image" src="https://github.com/user-attachments/assets/0dee31dc-8397-4ce0-89b9-d4a914898dee" />
 
-* Linux: `~/.config/blender/5.3/scripts/addons/`
-* Windows: `%APPDATA%\Blender Foundation\Blender\5.3\scripts\addons`
+### Manual: Add to your extensions folder.
+
+📥 [Download current main from Github](https://github.com/gnat/blender_universal_transform_gizmo/archive/refs/heads/main.zip)
+
+Copy the contained `blender_universal_transform_gizmo-main` to your extensions folder:
+
+* Windows: `%APPDATA%\Blender Foundation\Blender\5.3\extensions\user_default`
+* Linux: `~/.config/blender/5.3/extensions/user_default`
+
+Rename from `blender_universal_transform_gizmo-main` to `universal_transform_gizmo`
 
 Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Universal Transform Gizmo ✅
 
-## Usage options.
+## Usage.
 
-Toggle the sidebar to see the options:
+Toggle the sidebar to see the options.
 
-<img width="572" height="848" alt="image" src="https://github.com/user-attachments/assets/bd85d807-3dbd-479a-9477-4bda7c0c25b5" />
-
-
+<img width="292" height="243" alt="arrow" src="https://github.com/user-attachments/assets/8d4f7170-6c2d-4416-8abe-798e475ef56e" />
 
 ## 📚️ Design References
 
