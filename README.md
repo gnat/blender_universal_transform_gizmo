@@ -34,7 +34,8 @@ Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Universal
 
 Toggle the sidebar to see the options:
 
-<img width="487" height="775" alt="image" src="https://github.com/user-attachments/assets/6cfa6892-3d17-482f-bea3-6a2804126f10" />
+<img width="572" height="848" alt="image" src="https://github.com/user-attachments/assets/bd85d807-3dbd-479a-9477-4bda7c0c25b5" />
+
 
 
 ## 📚️ Design References
