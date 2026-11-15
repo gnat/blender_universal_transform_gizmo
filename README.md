@@ -25,7 +25,7 @@ Universal Transform Gizmo will install and activate automatically. ✅
 ### Manual: Extract manually into your addons folder.
 
 * Linux: `~/.config/blender/5.3/scripts/addons/`
-* Windows: `C:\Users\USER\AppData\Roaming\Blender Foundation\Blender\5.3\scripts\addons`
+* Windows: `%APPDATA%\Blender Foundation\Blender\5.3\scripts\addons`
 
 Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Universal Transform Gizmo ✅
 
