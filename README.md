@@ -8,7 +8,7 @@ Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mo
 
 ## 👁️ Improvements over default gizmo
 * One gizmo to rule them all. No need to switch gizmo modes.
-* Transform controls always face the viewer.
+* Gizmo controls always face the viewer.
 * Real time changed units displayed near gizmo.
 * Both single and double sided transform arrows supported.
 * Huge number of visual tweak options.
