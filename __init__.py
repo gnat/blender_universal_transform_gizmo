@@ -1,18 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Universal Transform Gizmo"""
 
-bl_info = {
-	"name": "Universal Transform Gizmo",
-	"author": "Nathaniel Sabanski",
-	"version": (1, 0, 0),
-	"blender": (5, 2, 0),
-	"location": "3D View > Sidebar > Universal",
-	"description": "Design improvments inspired by SDF Modeler, MagicaCSG, Unreal Engine!",
-	"doc_url": "https://github.com/gnat/blender_universal_transform_gizmo",
-	"tracker_url": "https://github.com/gnat/blender_universal_transform_gizmo",
-	"category": "3D View",
-}
-
 import bpy
 from . import settings, interaction, gizmos
 
