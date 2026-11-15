@@ -16,13 +16,13 @@ Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mo
 
 📥 [Download current main from Github](https://github.com/gnat/blender_universal_transform_gizmo/archive/refs/heads/main.zip)
 
-### Install `.zip` directly.
+### Automatic: Install `.zip` directly.
 
 Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Install From Disk... ➡️ Choose the .zip
 
 Universal Transform Gizmo will install and activate automatically. ✅
 
-### OR, extract manually into your addons folder.
+### Manual: Extract manually into your addons folder.
 
 * Linux: `~/.config/blender/5.3/scripts/addons/`
 * Windows: `C:\Users\USER\AppData\Roaming\Blender Foundation\Blender\5.3\scripts\addons`
