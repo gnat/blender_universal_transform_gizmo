@@ -7,7 +7,7 @@ maintainer = "Nathaniel Sabanski"
 website = "https://github.com/gnat/blender_universal_transform_gizmo"
 type = "add-on"
 tags = ["3D View", "Modeling", "User Interface"]
-blender_version_min = "5.3.0"
+blender_version_min = "5.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
 
 [build]
