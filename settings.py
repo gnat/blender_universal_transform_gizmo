@@ -52,7 +52,7 @@ class _Defaults:
 	show_pivot_toggle = False
 	show_snap_toggle = False
 	show_proportional_toggle = False
-	orientation_global_local_only = False
+	orientation_global_local_only = True
 
 def colors(context):
 	theme = context.preferences.themes[0].user_interface
@@ -136,8 +136,8 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	show_pivot_toggle: BoolProperty(name='Transform Pivot Point', default=False, update=redraw)
 	show_snap_toggle: BoolProperty(name='Snapping', default=False, update=redraw)
 	show_proportional_toggle: BoolProperty(name='Proportional Editing', default=False, update=redraw)
-	orientation_global_local_only: BoolProperty(name='Global / Local only', default=False,
-											description='Limit orientation cycling to Global and Local instead of all available orientations', update=redraw)
+	orientation_global_local_only: BoolProperty(name='Limit to Global/Local/Normal', default=True,
+											description='Limit orientation cycling to the big 3 instead of all available orientations', update=redraw)
 
 	def draw(self, context):
 		self.layout.operator('view3d.universal_gizmo_reset', icon='LOOP_BACK')
@@ -186,4 +186,3 @@ def draw_header(self, context):
 		self.layout.prop(context.window_manager, 'universal_gizmo_enabled', text='', icon='GIZMO', toggle=True)
 
 CLASSES = (UTG_Preferences, UTG_OT_reset, UTG_PT_main)
-
