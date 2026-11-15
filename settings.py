@@ -52,7 +52,7 @@ class _Defaults:
 	show_pivot_toggle = False
 	show_snap_toggle = False
 	show_proportional_toggle = False
-	orientation_global_local_only = True
+	orientation_global_local_only = False
 
 def colors(context):
 	theme = context.preferences.themes[0].user_interface
@@ -136,7 +136,7 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	show_pivot_toggle: BoolProperty(name='Transform Pivot Point', default=False, update=redraw)
 	show_snap_toggle: BoolProperty(name='Snapping', default=False, update=redraw)
 	show_proportional_toggle: BoolProperty(name='Proportional Editing', default=False, update=redraw)
-	orientation_global_local_only: BoolProperty(name='Global / Local only', default=True,
+	orientation_global_local_only: BoolProperty(name='Global / Local only', default=False,
 											description='Limit orientation cycling to Global and Local instead of all available orientations', update=redraw)
 
 	def draw(self, context):
