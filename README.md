@@ -60,3 +60,8 @@ Quick hide.
 
 <img width="453" height="423" alt="image" src="https://github.com/user-attachments/assets/87da42a1-ccb2-428b-ba15-5f1d93c450f9" />
 
+## FAQ
+
+What happened to the Blender `/scripts/addons` folder?
+* Blender deprecated the legacy add-on format in 4.2, but still supports loading it.
+
