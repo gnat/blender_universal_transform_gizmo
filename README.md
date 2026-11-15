@@ -7,7 +7,7 @@ Vastly improved transform gizmo (widget) for Blender 5.3+
 Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-modeler), [MagicaCSG](https://www.patreon.com/c/magicavoxel), Unreal Engine!
 
 ## 👁️ Improvements over default gizmo
-* One gizmo to rule them all. Stop switching gizmo modes.
+* One gizmo to rule them all. No need to switch gizmo modes.
 * Transform controls always face the viewer.
 * Real time changed units displayed near gizmo.
 * Both single and double sided transform arrows supported.
