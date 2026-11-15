@@ -60,7 +60,7 @@ def draw_appearance(layout, p):
 class UTG_Preferences(bpy.types.AddonPreferences):
 	bl_idname = PACKAGE
 
-	size: FloatProperty(name='Size Multiplier', default=1.5, min=0.4, max=4.0,
+	size: FloatProperty(name='Size Multiplier', default=1.2, min=0.4, max=4.0,
 						description="Multiplies Blender's global gizmo size", update=redraw)
 	opacity: FloatProperty(name='Opacity', default=0.9, min=0.05, max=1, update=redraw)
 	color_center: FloatVectorProperty(name='Screen Controls', subtype='COLOR', size=3, default=_Defaults.color_center, min=0, max=1, update=redraw)
