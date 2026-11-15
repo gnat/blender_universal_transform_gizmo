@@ -8,7 +8,8 @@ Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mo
 
 ## 👁️ Features
 * One gizmo to rule them all. No need to switch between gizmo modes.
-* Gizmo handles always face the camera!
+* Gizmo handles always face the camera.
+* Units conveniently displayed near gizmo during transform.
 * Both single and double sided location arrows supported.
 * Huge number of tweak options to fit your personal preference exactly.
 
