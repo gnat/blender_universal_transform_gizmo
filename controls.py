@@ -24,7 +24,7 @@ VISIBILITY = {
 def orientation_values(context):
 	slot = context.scene.transform_orientation_slots[0]
 	if settings.preferences(context).orientation_global_local_only:
-		return ['GLOBAL', 'LOCAL', 'NORMAL', 'VIEW']
+		return ['GLOBAL', 'LOCAL', 'NORMAL']
 	values = list(slot.bl_rna.properties['type'].enum_items.keys())
 	# RNA's static enum list omits custom orientations. A rejected empty value
 	# exposes the context's valid identifiers without changing the setting.
