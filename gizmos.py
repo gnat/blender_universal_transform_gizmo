@@ -97,7 +97,8 @@ class UTG_GT_handle(bpy.types.Gizmo):
 		if active and p.fade_inactive and not selected:
 			alpha *= 0.22
 		width = p.line_width + (0.7 if selected else 0)
-		if self.axis < 0:
+		if self.kind == 'SCALE' and self.axis < 0:
+			width *= 1.5
 			_capture_screen_control(self,context,color,alpha,width)
 			return
 		matrix = self.matrix_basis
