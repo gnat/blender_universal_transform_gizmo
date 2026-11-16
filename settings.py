@@ -14,6 +14,13 @@ ORIENTATION_ITEMS = [
 	('PARENT', 'Parent', 'Include Parent when cycling transform orientations', 'ORIENTATION_PARENT', 64),
 	('CUSTOM', 'Custom Orientations', 'Include custom orientations when cycling', 'EMPTY_AXIS', 128),
 ]
+PIVOT_ITEMS = [
+	('BOUNDING_BOX_CENTER', 'Bounding Box Center', 'Include Bounding Box Center when cycling pivot points', 'PIVOT_BOUNDBOX', 16),
+	('CURSOR', '3D Cursor', 'Include 3D Cursor when cycling pivot points', 'PIVOT_CURSOR', 8),
+	('INDIVIDUAL_ORIGINS', 'Individual Origins', 'Include Individual Origins when cycling pivot points', 'PIVOT_INDIVIDUAL', 2),
+	('MEDIAN_POINT', 'Median Point', 'Include Median Point when cycling pivot points', 'PIVOT_MEDIAN', 1),
+	('ACTIVE_ELEMENT', 'Active Element', 'Include Active Element when cycling pivot points', 'PIVOT_ACTIVE', 4),
+]
 
 def redraw(self=None, context=None):
 	for win in bpy.context.window_manager.windows:
@@ -34,12 +41,12 @@ def preferences(context):
 	return addon.preferences if addon else _Defaults()
 
 class _Defaults:
-	size = 1.1
+	size = 1.0
 	opacity = 0.9
 	color_center = (0.96, 0.96, 0.96)
 	color_hover = (1.0, 0.52, 0.12)
-	line_width = 2.5
-	arrow_length = 2.2
+	line_width = 2.0
+	arrow_length = 2.3
 	arrow_head_width = 0.18
 	arrow_head_length = 0.65
 	arrows_both_directions = False
@@ -63,6 +70,7 @@ class _Defaults:
 	show_snap_toggle = False
 	show_proportional_toggle = False
 	orientation_modes = {'GLOBAL', 'LOCAL', 'NORMAL'}
+	pivot_modes = {'MEDIAN_POINT', 'INDIVIDUAL_ORIGINS', 'ACTIVE_ELEMENT'}
 
 def colors(context):
 	theme = context.preferences.themes[0].user_interface
@@ -102,6 +110,13 @@ def draw_toggles(layout, p):
 	for identifier, name, description, icon, value in ORIENTATION_ITEMS:
 		row.prop(p, f'orientation_{identifier.lower()}', text='', icon=icon, toggle=True)
 	col.prop(p, 'show_pivot_toggle')
+	row = col.row()
+	row.enabled = p.show_pivot_toggle
+	row.alignment = 'LEFT'
+	row.scale_x = 1.0
+	row.scale_y = 1.0
+	for identifier, name, description, icon, value in PIVOT_ITEMS:
+		row.prop(p, f'pivot_{identifier.lower()}', text='', icon=icon, toggle=True)
 	col.prop(p, 'show_snap_toggle')
 	col.prop(p, 'show_proportional_toggle')
 	col = layout.column(align=True)
@@ -114,13 +129,13 @@ def draw_toggles(layout, p):
 class UTG_Preferences(bpy.types.AddonPreferences):
 	bl_idname = PACKAGE
 
-	size: FloatProperty(name='Size Multiplier', default=1.1, min=0.4, max=4.0,
+	size: FloatProperty(name='Size Multiplier', default=1.0, min=0.4, max=4.0,
 						description="Multiplies Blender's global gizmo size", update=redraw)
 	opacity: FloatProperty(name='Opacity', default=0.9, min=0.05, max=1, update=redraw)
 	color_center: FloatVectorProperty(name='Screen Controls', subtype='COLOR', size=3, default=_Defaults.color_center, min=0, max=1, update=redraw)
 	color_hover: FloatVectorProperty(name='Hover Color', subtype='COLOR', size=3, default=_Defaults.color_hover, min=0, max=1, update=redraw)
-	line_width: FloatProperty(name='Line Width', default=2.5, min=1, max=6, update=redraw)
-	arrow_length: FloatProperty(name='Arrow Length', default=2.2, min=0.8, max=3.5, update=redraw)
+	line_width: FloatProperty(name='Line Width', default=2.0, min=1, max=6, update=redraw)
+	arrow_length: FloatProperty(name='Arrow Length', default=2.3, min=0.8, max=3.5, update=redraw)
 	arrow_head_width: FloatProperty(name='Arrowhead Width', default=0.18, min=0.04, max=0.5, update=redraw)
 	arrow_head_length: FloatProperty(name='Arrowhead Length', default=0.65, min=0.1, max=1.5,
 									description='Length of the tapered head, limited by the total arrow length', update=redraw)
@@ -152,6 +167,8 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	show_proportional_toggle: BoolProperty(name='Proportional Editing', default=False, update=redraw)
 	orientation_modes: EnumProperty(name='Transform Orientations', items=ORIENTATION_ITEMS,
 									default=_Defaults.orientation_modes, options={'ENUM_FLAG'}, update=redraw)
+	pivot_modes: EnumProperty(name='Transform Pivot Points', items=PIVOT_ITEMS,
+									default=_Defaults.pivot_modes, options={'ENUM_FLAG'}, update=redraw)
 
 	def draw(self, context):
 		keymaps.draw(self.layout, context)
@@ -201,22 +218,25 @@ def draw_header(self, context):
 		self.layout.operator('view3d.universal_gizmo_toggle', text='', icon='GIZMO',
 						depress=context.window_manager.universal_gizmo_enabled).keep_button = False
 
-def orientation_property(identifier, name, description):
+def mode_property(property_name, identifier, name, description):
 	def get(self):
-		return identifier in self.orientation_modes
+		return identifier in getattr(self, property_name)
 
 	def set(self, enabled):
-		modes = self.orientation_modes
+		modes = getattr(self, property_name)
 		if enabled:
 			modes.add(identifier)
 		else:
 			modes.discard(identifier)
-		self.orientation_modes = modes
+		setattr(self, property_name, modes)
 
-	return BoolProperty(name=name, description=description, default=identifier in _Defaults.orientation_modes,
+	return BoolProperty(name=name, description=description, default=identifier in getattr(_Defaults, property_name),
 						get=get, set=set, options={'SKIP_SAVE'})
 
 for identifier, name, description, icon, value in ORIENTATION_ITEMS:
-	UTG_Preferences.__annotations__[f'orientation_{identifier.lower()}'] = orientation_property(identifier, name, description)
+	UTG_Preferences.__annotations__[f'orientation_{identifier.lower()}'] = mode_property('orientation_modes', identifier, name, description)
+
+for identifier, name, description, icon, value in PIVOT_ITEMS:
+	UTG_Preferences.__annotations__[f'pivot_{identifier.lower()}'] = mode_property('pivot_modes', identifier, name, description)
 
 CLASSES = (UTG_Preferences, UTG_OT_reset, UTG_PT_main)

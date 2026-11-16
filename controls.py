@@ -86,7 +86,8 @@ def cycle(context, kind, reverse=False):
 			values = orientation_values(context)
 		else:
 			owner, prop = tool_settings, 'transform_pivot_point'
-			values = list(owner.bl_rna.properties[prop].enum_items.keys())
+			enabled = settings.preferences(context).pivot_modes
+			values = [item[0] for item in settings.PIVOT_ITEMS if item[0] in enabled]
 		if not values:
 			return
 		current = getattr(owner, prop)
@@ -116,7 +117,7 @@ class UTG_OT_toggle_visibility(bpy.types.Operator):
 class UTG_OT_cycle_setting(bpy.types.Operator):
 	bl_idname = 'view3d.universal_gizmo_cycle_setting'
 	bl_label = 'Universal Gizmo Setting'
-	bl_options = {'REGISTER', 'UNDO', 'INTERNAL'}
+	bl_options = {'UNDO', 'INTERNAL'}
 
 	setting: EnumProperty(items=KINDS)
 	reverse: BoolProperty(default=False, options={'HIDDEN', 'SKIP_SAVE'})
