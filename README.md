@@ -60,6 +60,31 @@ Quick hide.
 
 <img width="453" height="423" alt="image" src="https://github.com/user-attachments/assets/87da42a1-ccb2-428b-ba15-5f1d93c450f9" />
 
+## 🌘 Change Log
+
+### 1.2.0
+
+* Transform Mode toggles now easily customized.
+* Show/hide can now be added to Blender Quick Favorites.
+* Improved polish for use with Chisel extension.
+* Options menu cleanup.
+* Special thanks YAZZ for all the testing!
+
+### 1.1.0
+
+* New show/hide keybind. (Optional)
+* New show/hide button. (Optional)
+* New assortment of Transform Mode toggles. (Optional)
+* Fixes for use with Chisel extension.
+* Better defaults.
+* Decreased Blender requirement to 5.2.0
+* Special thanks YAZZ for all the testing!
+
+### 1.0.0
+
+Initial public release.
+
+
 ## FAQ
 
 What happened to the Blender `/scripts/addons` folder?
