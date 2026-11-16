@@ -1,9 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import bpy
-from bpy.props import BoolProperty, FloatProperty, FloatVectorProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty
 from . import keymaps
 
 PACKAGE = __package__
+ORIENTATION_ITEMS = [
+	('GLOBAL', 'Global', 'Include Global when cycling transform orientations', 'ORIENTATION_GLOBAL', 1),
+	('LOCAL', 'Local', 'Include Local when cycling transform orientations', 'ORIENTATION_LOCAL', 2),
+	('NORMAL', 'Normal', 'Include Normal when cycling transform orientations', 'ORIENTATION_NORMAL', 4),
+	('GIMBAL', 'Gimbal', 'Include Gimbal when cycling transform orientations', 'ORIENTATION_GIMBAL', 8),
+	('VIEW', 'View', 'Include View when cycling transform orientations', 'ORIENTATION_VIEW', 16),
+	('CURSOR', 'Cursor', 'Include Cursor when cycling transform orientations', 'ORIENTATION_CURSOR', 32),
+	('PARENT', 'Parent', 'Include Parent when cycling transform orientations', 'ORIENTATION_PARENT', 64),
+	('CUSTOM', 'Custom Orientations', 'Include custom orientations when cycling', 'EMPTY_AXIS', 128),
+]
 
 def redraw(self=None, context=None):
 	for win in bpy.context.window_manager.windows:
@@ -52,7 +62,7 @@ class _Defaults:
 	show_pivot_toggle = False
 	show_snap_toggle = False
 	show_proportional_toggle = False
-	orientation_global_local_only = True
+	orientation_modes = {'GLOBAL', 'LOCAL', 'NORMAL'}
 
 def colors(context):
 	theme = context.preferences.themes[0].user_interface
@@ -86,7 +96,11 @@ def draw_toggles(layout, p):
 	col.prop(p, 'show_orientation_toggle')
 	row = col.row()
 	row.enabled = p.show_orientation_toggle
-	row.prop(p, 'orientation_global_local_only')
+	row.alignment = 'LEFT'
+	row.scale_x = 1.0
+	row.scale_y = 1.0
+	for identifier, name, description, icon, value in ORIENTATION_ITEMS:
+		row.prop(p, f'orientation_{identifier.lower()}', text='', icon=icon, toggle=True)
 	col.prop(p, 'show_pivot_toggle')
 	col.prop(p, 'show_snap_toggle')
 	col.prop(p, 'show_proportional_toggle')
@@ -136,8 +150,8 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	show_pivot_toggle: BoolProperty(name='Transform Pivot Point', default=False, update=redraw)
 	show_snap_toggle: BoolProperty(name='Snapping', default=False, update=redraw)
 	show_proportional_toggle: BoolProperty(name='Proportional Editing', default=False, update=redraw)
-	orientation_global_local_only: BoolProperty(name='Limit to Global/Local/Normal', default=True,
-											description='Limit orientation cycling to the big 3 instead of all available orientations', update=redraw)
+	orientation_modes: EnumProperty(name='Transform Orientations', items=ORIENTATION_ITEMS,
+									default=_Defaults.orientation_modes, options={'ENUM_FLAG'}, update=redraw)
 
 	def draw(self, context):
 		keymaps.draw(self.layout, context)
@@ -186,5 +200,23 @@ def draw_header(self, context):
 	if context.mode in {'OBJECT', 'EDIT_MESH'}:
 		self.layout.operator('view3d.universal_gizmo_toggle', text='', icon='GIZMO',
 						depress=context.window_manager.universal_gizmo_enabled).keep_button = False
+
+def orientation_property(identifier, name, description):
+	def get(self):
+		return identifier in self.orientation_modes
+
+	def set(self, enabled):
+		modes = self.orientation_modes
+		if enabled:
+			modes.add(identifier)
+		else:
+			modes.discard(identifier)
+		self.orientation_modes = modes
+
+	return BoolProperty(name=name, description=description, default=identifier in _Defaults.orientation_modes,
+						get=get, set=set, options={'SKIP_SAVE'})
+
+for identifier, name, description, icon, value in ORIENTATION_ITEMS:
+	UTG_Preferences.__annotations__[f'orientation_{identifier.lower()}'] = orientation_property(identifier, name, description)
 
 CLASSES = (UTG_Preferences, UTG_OT_reset, UTG_PT_main)

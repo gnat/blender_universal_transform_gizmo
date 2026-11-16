@@ -23,8 +23,6 @@ VISIBILITY = {
 
 def orientation_values(context):
 	slot = context.scene.transform_orientation_slots[0]
-	if settings.preferences(context).orientation_global_local_only:
-		return ['GLOBAL', 'LOCAL', 'NORMAL']
 	values = list(slot.bl_rna.properties['type'].enum_items.keys())
 	# RNA's static enum list omits custom orientations. A rejected empty value
 	# exposes the context's valid identifiers without changing the setting.
@@ -39,7 +37,9 @@ def orientation_values(context):
 			values = list(available)
 	if slot.type not in values:
 		values.append(slot.type)
-	return values
+	enabled = settings.preferences(context).orientation_modes
+	builtins = set(slot.bl_rna.properties['type'].enum_items.keys())
+	return [value for value in values if value in enabled or (value not in builtins and 'CUSTOM' in enabled)]
 
 def proportional_property(context):
 	return 'use_proportional_edit_objects' if context.mode == 'OBJECT' else 'use_proportional_edit'
@@ -87,6 +87,8 @@ def cycle(context, kind, reverse=False):
 		else:
 			owner, prop = tool_settings, 'transform_pivot_point'
 			values = list(owner.bl_rna.properties[prop].enum_items.keys())
+		if not values:
+			return
 		current = getattr(owner, prop)
 		index = values.index(current) if current in values else (0 if reverse else -1)
 		setattr(owner, prop, values[(index + (-1 if reverse else 1)) % len(values)])
