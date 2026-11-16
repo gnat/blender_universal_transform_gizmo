@@ -1,3 +1,4 @@
+
 <img width="1920" height="1080" alt="blender_universal_transform_gizmo" src="https://github.com/user-attachments/assets/0d9665cc-3241-4801-a06a-0dc94728da99" />
 
 # Universal Transform Gizmo
@@ -12,6 +13,9 @@ Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mo
 * Real time changed units displayed near gizmo.
 * Both single and double sided transform arrows supported.
 * Huge number of visual tweak options.
+
+<img width="439" height="300" alt="gizmo_hype" src="https://github.com/user-attachments/assets/11543e88-fc1b-465b-9eb6-d70bb1930dbd" />
+
 
 ## 📥 Install
 
