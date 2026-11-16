@@ -140,9 +140,9 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 											description='Limit orientation cycling to the big 3 instead of all available orientations', update=redraw)
 
 	def draw(self, context):
-		self.layout.operator('view3d.universal_gizmo_reset', icon='LOOP_BACK')
 		keymaps.draw(self.layout, context)
 		self.layout.separator()
+		self.layout.operator('view3d.universal_gizmo_reset', icon='LOOP_BACK')
 		draw_appearance(self.layout, self)
 		self.layout.separator()
 		draw_toggles(self.layout, self)
@@ -170,13 +170,14 @@ class UTG_PT_main(bpy.types.Panel):
 	def draw(self, context):
 		layout = self.layout
 		p = preferences(context)
-		layout.prop(context.window_manager, 'universal_gizmo_enabled', text='Show Universal Gizmo')
-		layout.operator('view3d.universal_gizmo_reset', icon='LOOP_BACK')
+		layout.operator('view3d.universal_gizmo_toggle', text='Show Universal Gizmo', icon='GIZMO',
+						depress=context.window_manager.universal_gizmo_enabled).keep_button = False
 		keymaps.draw(layout, context)
 		if not context.space_data.show_gizmo:
 			layout.prop(context.space_data, 'show_gizmo', text='Enable Viewport Gizmos', icon='ERROR')
 		layout.separator()
 		layout.label(text='Appearance')
+		layout.operator('view3d.universal_gizmo_reset', icon='LOOP_BACK')
 		draw_appearance(layout.column(), p)
 		layout.separator()
 		draw_toggles(layout.column(), p)

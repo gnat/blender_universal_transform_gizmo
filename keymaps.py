@@ -8,7 +8,8 @@ def user_item(context):
 	config = context.window_manager.keyconfigs.user
 	keymap = config.keymaps.get('3D View') if config else None
 	if keymap:
-		return next((item for item in keymap.keymap_items if item.idname == _OPERATOR), None)
+		items = [item for item in keymap.keymap_items if item.idname == _OPERATOR and not item.properties.keep_button]
+		return next((item for item in items if item.type != 'NONE'), items[0] if items else None)
 	return None
 
 def draw(layout, context):
