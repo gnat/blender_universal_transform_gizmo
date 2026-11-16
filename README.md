@@ -10,9 +10,11 @@ Design improvements inspired by [SDF Modeler](https://sascha-rode.itch.io/sdf-mo
 ## 👁️ Improvements over default gizmo
 * One gizmo to rule them all. No need to switch gizmo modes.
 * Gizmo controls always face the viewer.
-* Real time changed units displayed near gizmo.
-* Both single and double sided transform arrows supported.
-* Huge number of visual tweak options.
+* Both single and double sided transform arrows.
+* Optional real time unit display near gizmo.
+* Optional orientation toggles near gizmo (global, local, etc).
+* Highly customizable with many visual tweak options.
+
 
 <img width="439" height="300" alt="gizmo_hype" src="https://github.com/user-attachments/assets/11543e88-fc1b-465b-9eb6-d70bb1930dbd" />
 
