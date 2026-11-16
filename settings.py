@@ -34,14 +34,14 @@ def preferences(context):
 	return addon.preferences if addon else _Defaults()
 
 class _Defaults:
-	size = 1.2
+	size = 1.1
 	opacity = 0.9
 	color_center = (0.96, 0.96, 0.96)
 	color_hover = (1.0, 0.52, 0.12)
 	line_width = 2.5
-	arrow_length = 2.0
-	arrow_head_width = 0.15
-	arrow_head_length = 0.60
+	arrow_length = 2.2
+	arrow_head_width = 0.18
+	arrow_head_length = 0.65
 	arrows_both_directions = False
 	cube_size = 0.085
 	plane_size = 0.34
@@ -114,15 +114,15 @@ def draw_toggles(layout, p):
 class UTG_Preferences(bpy.types.AddonPreferences):
 	bl_idname = PACKAGE
 
-	size: FloatProperty(name='Size Multiplier', default=1.2, min=0.4, max=4.0,
+	size: FloatProperty(name='Size Multiplier', default=1.1, min=0.4, max=4.0,
 						description="Multiplies Blender's global gizmo size", update=redraw)
 	opacity: FloatProperty(name='Opacity', default=0.9, min=0.05, max=1, update=redraw)
 	color_center: FloatVectorProperty(name='Screen Controls', subtype='COLOR', size=3, default=_Defaults.color_center, min=0, max=1, update=redraw)
 	color_hover: FloatVectorProperty(name='Hover Color', subtype='COLOR', size=3, default=_Defaults.color_hover, min=0, max=1, update=redraw)
 	line_width: FloatProperty(name='Line Width', default=2.5, min=1, max=6, update=redraw)
-	arrow_length: FloatProperty(name='Arrow Length', default=2.0, min=0.8, max=3.5, update=redraw)
-	arrow_head_width: FloatProperty(name='Arrowhead Width', default=0.15, min=0.04, max=0.5, update=redraw)
-	arrow_head_length: FloatProperty(name='Arrowhead Length', default=0.60, min=0.1, max=1.5,
+	arrow_length: FloatProperty(name='Arrow Length', default=2.2, min=0.8, max=3.5, update=redraw)
+	arrow_head_width: FloatProperty(name='Arrowhead Width', default=0.18, min=0.04, max=0.5, update=redraw)
+	arrow_head_length: FloatProperty(name='Arrowhead Length', default=0.65, min=0.1, max=1.5,
 									description='Length of the tapered head, limited by the total arrow length', update=redraw)
 	arrows_both_directions: BoolProperty(name='Arrows in Both Directions', default=False, update=redraw)
 	cube_size: FloatProperty(name='Scale Cube Size', default=0.085, min=0.04, max=0.18, update=redraw)
