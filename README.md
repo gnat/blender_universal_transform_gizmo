@@ -46,15 +46,13 @@ Rename from `blender_universal_transform_gizmo-main` to `universal_transform_giz
 
 Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Universal Transform Gizmo ✅
 
-## Usage.
+## Useful Tips
 
-
-Toggle the sidebar to see the options.
+Toggle the sidebar to see the gizmo tweak panel.
 
 <img width="292" height="243" alt="arrow_good" src="https://github.com/user-attachments/assets/c43cde70-9ab3-4000-8f6c-267249891738" />
 
-
-Quick hide.
+Gizmo quick hide.
 
 <img width="202" height="186" alt="toggle_good" src="https://github.com/user-attachments/assets/fd800be1-19f4-4563-ab53-c5c53151d229" />
 
