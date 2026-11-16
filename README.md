@@ -29,7 +29,8 @@ Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Get Extensions ➡️ In
 
 Universal Transform Gizmo will install and activate automatically. ✅
 
-<img width="778" height="364" alt="install2" src="https://github.com/user-attachments/assets/cdb1a3de-63a4-4dea-bc5e-78db5db3f61a" />
+<img width="778" height="364" alt="install_good" src="https://github.com/user-attachments/assets/77e74313-edff-48cf-8968-7a4dcf5d8dc6" />
+
 
 ### Manual: Add to your extensions folder.
 
@@ -50,11 +51,12 @@ Start Blender ➡️ Edit ➡️ Preferences ... ➡️ Add-ons ➡️ Universal
 
 Toggle the sidebar to see the options.
 
-<img width="292" height="243" alt="arrow" src="https://github.com/user-attachments/assets/8d4f7170-6c2d-4416-8abe-798e475ef56e" />
+<img width="292" height="243" alt="arrow_good" src="https://github.com/user-attachments/assets/c43cde70-9ab3-4000-8f6c-267249891738" />
+
 
 Quick hide.
 
-<img width="202" height="186" alt="toggle" src="https://github.com/user-attachments/assets/63c97733-6cc6-4cc6-a7d3-a5e74c5d7d91" />
+<img width="202" height="186" alt="toggle_good" src="https://github.com/user-attachments/assets/fd800be1-19f4-4563-ab53-c5c53151d229" />
 
 ## 📚️ Design References
 
