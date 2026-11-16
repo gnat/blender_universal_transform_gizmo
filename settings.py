@@ -184,6 +184,7 @@ class UTG_PT_main(bpy.types.Panel):
 
 def draw_header(self, context):
 	if context.mode in {'OBJECT', 'EDIT_MESH'}:
-		self.layout.prop(context.window_manager, 'universal_gizmo_enabled', text='', icon='GIZMO', toggle=True)
+		self.layout.operator('view3d.universal_gizmo_toggle', text='', icon='GIZMO',
+						depress=context.window_manager.universal_gizmo_enabled).keep_button = False
 
 CLASSES = (UTG_Preferences, UTG_OT_reset, UTG_PT_main)
