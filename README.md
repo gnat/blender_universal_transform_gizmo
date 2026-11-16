@@ -68,6 +68,13 @@ Quick hide.
 
 ## 🌘 Change Log
 
+### 1.3.0
+
+* New filter for Transform Pivot Point toggle. (Optional)
+* Fix issue with Adjust Last Operation panel.
+* Better defaults.
+* Special thanks YAZZ for all the testing!
+
 ### 1.2.0
 
 * Transform Mode toggles now easily customized.
@@ -88,8 +95,7 @@ Quick hide.
 
 ### 1.0.0
 
-Initial public release.
-
+* Initial public release.
 
 ## FAQ
 
