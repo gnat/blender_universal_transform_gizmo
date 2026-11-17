@@ -47,8 +47,8 @@ class _Defaults:
 	color_hover = (1.0, 0.52, 0.12)
 	line_width = 2.0
 	arrow_length = 2.3
-	arrow_head_width = 0.18
-	arrow_head_length = 0.65
+	arrow_head_width = 0.2
+	arrow_head_length = 0.55
 	arrows_both_directions = False
 	cube_size = 0.085
 	plane_size = 0.34
@@ -136,8 +136,8 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	color_hover: FloatVectorProperty(name='Hover Color', subtype='COLOR', size=3, default=_Defaults.color_hover, min=0, max=1, update=redraw)
 	line_width: FloatProperty(name='Line Width', default=2.0, min=1, max=6, update=redraw)
 	arrow_length: FloatProperty(name='Arrow Length', default=2.3, min=0.8, max=3.5, update=redraw)
-	arrow_head_width: FloatProperty(name='Arrowhead Width', default=0.18, min=0.04, max=0.5, update=redraw)
-	arrow_head_length: FloatProperty(name='Arrowhead Length', default=0.65, min=0.1, max=1.5,
+	arrow_head_width: FloatProperty(name='Arrowhead Width', default=0.2, min=0.04, max=0.5, update=redraw)
+	arrow_head_length: FloatProperty(name='Arrowhead Length', default=0.55, min=0.1, max=1.5,
 									description='Length of the tapered head, limited by the total arrow length', update=redraw)
 	arrows_both_directions: BoolProperty(name='Arrows in Both Directions', default=False, update=redraw)
 	cube_size: FloatProperty(name='Scale Cube Size', default=0.085, min=0.04, max=0.18, update=redraw)

@@ -208,6 +208,9 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 			return False
 		if context.mode not in {'OBJECT', 'EDIT_MESH'} or not context.active_object:
 			return False
+		tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
+		if tool and tool.idname in {'builtin.move', 'builtin.rotate', 'builtin.scale', 'builtin.scale_cage', 'builtin.transform'}:
+			return False
 		if not context.space_data.show_gizmo:
 			return False
 		# Hide during unrelated keyboard transforms, but retain our active handles.
