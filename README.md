@@ -68,6 +68,12 @@ Gizmo quick hide.
 
 ## 🌘 Change Log
 
+### 1.3.1
+
+* Hide when built in gizmos are explicitly selected.
+* Better defaults.
+* Special thanks YAZZ for all the testing!
+
 ### 1.3.0
 
 * New filter for Transform Pivot Point toggle. (Optional)
