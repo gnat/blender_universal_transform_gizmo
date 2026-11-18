@@ -68,6 +68,13 @@ Gizmo quick hide.
 
 ## 🌘 Change Log
 
+### 1.5.0
+
+* Pose Mode support.
+* Brightness option for new trackball control pies.
+* Radians toggle. Default OFF.
+* Special thanks YAZZ for all the testing! 
+
 ### 1.4.0
 
 * New Trackball Rotation control (Arcball) with 2 axis visual.
