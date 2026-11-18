@@ -15,6 +15,7 @@ from . import context as ctx, settings
 
 _SESSION = None
 _DRAW = []
+TRACKBALL_MIN_ANGLE = 0.00005
 
 def current(context=None):
 	s = _SESSION
@@ -73,40 +74,129 @@ class Session:
 		self.scale = ctx.world_per_pixel(context, self.center) * context.preferences.view.gizmo_size * p.size
 		self.radius = self.scale * (p.arc_radius if axis >= 0 and kind == 'ROTATE' else p.screen_radius)
 		self.pie_start = self._start_direction(context, mouse) if kind == 'ROTATE' else None
+		if kind == 'TRACKBALL':
+			self.radius = self.scale * p.arc_radius * p.trackball_scale
+			self.trackball_angles = (0.0, 0.0)
+			self.trackball_mouse = Vector(mouse)
+			toward = self.view_basis.col[2]
+			# Tilt each plane toward the viewer so its slice remains readable.
+			self.trackball_pie_normals = tuple((self.view_basis.col[i] + toward * 0.4).normalized()
+												for i in range(2))
+			x_normal, y_normal = self.trackball_pie_normals
+			# The planes intersect along a shared, viewer-facing starting edge.
+			self.trackball_pie_start = x_normal.cross(y_normal).normalized()
+			self.trackball_input = Vector((0, 0))
+			self.trackball_ctrl = self.trackball_shift = False
+			self.trackball_snap = False
+			self.trackball_numbers = ['', '']
+			self.trackball_field = 0
+			self.trackball_unit = context.scene.unit_settings.system_rotation
+			self.trackball_edges = None
+			if not self.object and context.tool_settings.transform_pivot_point == 'INDIVIDUAL_ORIGINS':
+				self.trackball_edges = []
+				for ob, v in self.sample_items:
+					edge = next((e for e in v.link_edges if e.select and not e.hide), None)
+					if edge:
+						self.trackball_edges.append((ob, v, edge.other_vert(v)))
+			if not self.object:
+				self.trackball_vectors = self._trackball_vectors(self.points, self.mean)
 
 	def _start_direction(self, context, mouse):
+		axis = self.rot_axis
 		origin = view3d_utils.region_2d_to_origin_3d(self.region, context.region_data, mouse)
 		direction = view3d_utils.region_2d_to_vector_3d(self.region, context.region_data, mouse)
-		denom = direction.dot(self.rot_axis)
+		denom = direction.dot(axis)
 		vec = Vector()
 		if abs(denom) > 1e-6:
-			hit = origin + direction * ((self.center - origin).dot(self.rot_axis) / denom)
+			hit = origin + direction * ((self.center - origin).dot(axis) / denom)
 			vec = hit - self.center
-			vec -= self.rot_axis * vec.dot(self.rot_axis)
+			vec -= axis * vec.dot(axis)
 		if vec.length_squared < 1e-12:
-			vec = self.rot_axis.orthogonal()
+			vec = axis.orthogonal()
 		return vec.normalized()
+
+	def _trackball_vectors(self, points, mean):
+		if self.trackball_edges is not None:
+			return [ctx.world_point(ob, b) - ctx.world_point(ob, a) for ob, a, b in self.trackball_edges]
+		center = mean if len(points) > 1 else self.center
+		return [p - center for p in points]
+
+	def _sample_trackball(self, points, mean):
+		# The mouse input disambiguates turns and selections with no observable rotation.
+		x, y = self.trackball_input
+		if self.trackball_snap != self.trackball_ctrl:
+			step = math.radians(1 if self.trackball_shift else 5)
+			x, y = round(x / step) * step, round(y / step) * step
+		components = [-y, x]
+		for i, number in enumerate(self.trackball_numbers):
+			try:
+				value = float(number)
+			except ValueError:
+				continue
+			if math.isfinite(value):
+				components[i] = value if self.trackball_unit == 'RADIANS' else math.radians(value)
+		hint = self.view_basis @ Vector((*components, 0))
+		axis, angle = hint.normalized(), hint.length
+		if self.object:
+			change = self.object.matrix_world.to_3x3() @ self.linear.inverted_safe()
+			axis, angle = change.to_quaternion().to_axis_angle()
+		else:
+			pairs = list(zip(self.trackball_vectors, self._trackball_vectors(points, mean)))
+			if pairs:
+				# A point's displacement is perpendicular to the rotation axis.
+				# Trackball's axis lies in the view plane, so one projected chord identifies it.
+				view_normal = self.view_basis.col[2]
+				normals = [view_normal.cross(b - a) for a, b in pairs]
+				normal = max(normals, key=lambda n: n.length_squared)
+				if normal.length_squared > 1e-12:
+					axis = normal.normalized()
+				sine = sum(axis.dot(a.cross(b)) for a, b in pairs)
+				cosine = sum(a.dot(b) - a.dot(axis)*b.dot(axis) for a, b in pairs)
+				if abs(sine) + abs(cosine) > 1e-12:
+					angle = math.atan2(sine, cosine)
+		if abs(angle) < 1e-6 and hint.length > math.pi:
+			axis = hint.normalized()
+		angle += round((hint.dot(axis) - angle) / math.tau) * math.tau
+		self.trackball_angles = tuple(angle * axis.dot(self.view_basis.col[i]) for i in range(2))
 
 	@property
 	def display_center(self):
 		return self.center + self.delta if self.kind == 'MOVE' else self.center
 
 	def record_event(self, event):
+		if self.kind == 'TRACKBALL':
+			self.trackball_ctrl, self.trackball_shift = event.ctrl, event.shift
+			if event.type == 'MOUSEMOVE':
+				mouse = Vector((event.mouse_region_x, event.mouse_region_y))
+				self.trackball_input += (mouse - self.trackball_mouse) * (0.01 / 30 if event.shift else 0.01)
+				self.trackball_mouse = mouse
 		if event.value != 'PRESS' or event.ctrl or event.alt:
 			return
+		number = self.trackball_numbers[self.trackball_field] if self.kind == 'TRACKBALL' else self.numeric
 		if event.type == 'BACK_SPACE':
-			self.numeric = self.numeric[:-1]
+			number = number[:-1]
 		elif event.type in {'DEL', 'DELETE'}:
-			self.numeric = ''
+			number = ''
 		elif event.unicode and event.unicode in '0123456789.+-*/()':
 			# Only used to distinguish whole turns, never to drive a transform.
-			self.numeric += event.unicode
+			number += event.unicode
+		if self.kind == 'TRACKBALL':
+			self.trackball_numbers[self.trackball_field] = number
+			if event.type == 'TAB':
+				if event.shift:
+					self.trackball_snap = not self.trackball_snap
+				elif any(self.trackball_numbers):
+					self.trackball_field = 1 - self.trackball_field
+		else:
+			self.numeric = number
 
 	def sample(self):
 		points = [ctx.world_point(ob, v) for ob, v in self.sample_items]
 		mean = sum(points, Vector()) / len(points)
 		self.delta = mean - self.mean
-		if self.kind == 'SCALE':
+		if self.kind == 'TRACKBALL':
+			self._sample_trackball(points, mean)
+		elif self.kind == 'SCALE':
 			if self.object:
 				change = self.object.matrix_world.to_3x3() @ self.linear.inverted_safe()
 				self.factors = Vector(tuple(u.dot(change @ u) for u in self.basis.col))
@@ -144,9 +234,12 @@ class Session:
 								if abs(dot) + abs(cross) > 1e-12 else number)
 
 	def text(self, context):
+		if self.kind == 'TRACKBALL':
+			return '\n'.join(f'{axis}  {math.degrees(angle):+.2f}°   {angle:+.3f} r.'
+							for axis, angle in zip('XY', self.trackball_angles) if abs(angle) >= TRACKBALL_MIN_ANGLE)
 		if self.kind == 'ROTATE':
 			name = 'XYZ'[self.axis] if self.axis >= 0 else 'Screen'
-			return f'{name}  {math.degrees(self.angle):+.2f}°   {self.angle:+.4f} rad'
+			return f'{name}  {math.degrees(self.angle):+.2f}°   {self.angle:+.3f} r.'
 		if self.kind == 'SCALE':
 			if self.axis < 0:
 				factor = sum(self.factors) / 3
@@ -179,46 +272,74 @@ def _draw_text():
 		p = settings.preferences(context)
 		scale = context.preferences.system.ui_scale
 		blf.size(0, p.font_size * scale)
-		text = s.text(context)
-		width, height = blf.dimensions(0, text)
+		lines = s.text(context).splitlines()
+		if not lines:
+			return
+		width, height = map(max, zip(*(blf.dimensions(0, line) for line in lines)))
+		spacing = p.font_size * scale * 1.2
+		height += (len(lines)-1) * spacing
 		x = max(12, min(anchor.x + 32 * scale, s.region.width - width - 12))
 		y = max(20, min(anchor.y - 40 * scale, s.region.height - height - 12))
 		blf.enable(0, blf.SHADOW)
 		blf.shadow(0, 5, 0, 0, 0, 0.9)
 		blf.shadow_offset(0, 1, -1)
 		blf.color(0, 1, 1, 1, 1)
-		blf.position(0, x, y, 0)
-		blf.draw(0, text)
+		for i, line in enumerate(reversed(lines)):
+			blf.position(0, x, y + i*spacing, 0)
+			blf.draw(0, line)
 		blf.disable(0, blf.SHADOW)
 	except (ReferenceError, RuntimeError):
 		pass
 
+def _draw_sector(s, start, normal, angle, color, width):
+	u = start * s.radius
+	lines = [s.center, s.center + u]
+	if abs(angle) >= 1e-6:
+		steps = max(2, int(abs(angle) / math.tau * 128))
+		v = normal.cross(u)
+		arc = [s.center + u * math.cos(angle * i / steps) + v * math.sin(angle * i / steps) for i in range(steps + 1)]
+		verts = [co for i in range(steps) for co in (s.center, arc[i], arc[i+1])]
+		lines += [co for a, b in zip(arc, arc[1:]) for co in (a, b)]
+		lines += [s.center, arc[-1]]
+		_draw_batch('TRIS', verts, (*color, 0.8))
+	_draw_batch('LINES', lines, (*color, 0.95), width)
+
 def _draw_pie():
 	context = bpy.context
 	s = current(context)
-	if s is None or s.kind != 'ROTATE':
+	if s is None or s.kind not in {'ROTATE', 'TRACKBALL'}:
 		return
 	blend,depth = gpu.state.blend_get(),gpu.state.depth_test_get()
 	try:
 		p = settings.preferences(context)
-		angle = math.copysign(min(abs(s.angle), math.tau), s.angle)
-		steps = max(2, int(abs(angle) / math.tau * 128))
-		u = s.pie_start * s.radius
-		v = s.rot_axis.cross(u)
-		arc = [s.center + u * math.cos(angle * i / steps) + v * math.sin(angle * i / steps) for i in range(steps + 1)]
-		verts = [co for i in range(steps) for co in (s.center, arc[i], arc[i+1])]
+		if s.kind == 'TRACKBALL':
+			# Sample in this draw pass so the pies and readouts update together.
+			s.sample()
 		gpu.state.blend_set('ALPHA')
 		gpu.state.depth_test_set('NONE')
-		lines = [co for a, b in zip(arc, arc[1:]) for co in (a, b)]
-		lines += [s.center, arc[0], s.center, arc[-1]]
 		with gpu.matrix.push_pop(),gpu.matrix.push_pop_projection():
 			gpu.matrix.load_matrix(context.region_data.view_matrix)
 			gpu.matrix.load_projection_matrix(context.region_data.window_matrix)
-			_draw_batch('TRIS', verts, (*p.color_hover, 0.8))
-			_draw_batch('LINES', lines, (*p.color_hover, 0.95), p.line_width)
+			if s.kind == 'TRACKBALL':
+				_draw_trackball_pies(s, p)
+			else:
+				angle = math.copysign(min(abs(s.angle), math.tau), s.angle)
+				_draw_sector(s, s.pie_start, s.rot_axis, angle, p.color_hover, p.line_width)
 	finally:
 		gpu.state.blend_set(blend)
 		gpu.state.depth_test_set(depth)
+
+def _draw_trackball_pies(s, p):
+	colors = ((0.68, 0.25, 0.04), (1.0, 0.52, 0.12))
+	for axis in (1, 0):
+		angle = s.trackball_angles[axis]
+		if abs(angle) < TRACKBALL_MIN_ANGLE:
+			continue
+		sweep = math.fmod(angle, math.tau)
+		if math.tau - abs(sweep) < 1e-6:
+			sweep = 0.0
+		normal = s.trackball_pie_normals[axis]
+		_draw_sector(s, s.trackball_pie_start, normal, sweep, colors[axis], p.line_width)
 
 def _start_draw():
 	if not _DRAW:
@@ -250,12 +371,15 @@ def prepare(context, gizmo):
 	_SESSION = s
 	props = gizmo.operator_properties
 	props.release_confirm = True
-	props.constraint_axis = s.constraint
-	props.orient_type = s.orient
-	props.orient_matrix = s.basis
-	props.orient_matrix_type = s.orient
-	if s.kind == 'ROTATE':
-		props.orient_axis = 'XYZ'[s.axis] if s.axis >= 0 else 'Z'
+	if s.kind != 'TRACKBALL':
+		props.constraint_axis = s.constraint
+		props.orient_type = s.orient
+		props.orient_matrix = s.basis
+		props.orient_matrix_type = s.orient
+		if s.kind == 'ROTATE':
+			props.orient_axis = 'XYZ'[s.axis] if s.axis >= 0 else 'Z'
+	else:
+		context.area.tag_redraw()
 	_start_draw()
 
 	def check_start():

@@ -4,7 +4,9 @@
 import bpy
 from . import settings, interaction, gizmos, controls, keymaps
 
-_CLASSES = (*settings.CLASSES, *interaction.CLASSES, *gizmos.CLASSES, *controls.CLASSES, *keymaps.CLASSES)
+# Blender picks groups in registration order and draws them in reverse.
+_CLASSES = (*settings.CLASSES, *interaction.CLASSES, *gizmos.CLASSES, *controls.CLASSES,
+			gizmos.UTG_GGT_trackball, *keymaps.CLASSES)
 
 def register():
 	for cls in _CLASSES:

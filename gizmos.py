@@ -94,10 +94,12 @@ class UTG_GT_handle(bpy.types.Gizmo):
 											and active.direction == self.direction)
 		color = tuple(p.color_hover) if selected else tuple(self.color)
 		alpha = self.base_alpha
+		if selected and self.kind == 'TRACKBALL':
+			alpha = min(1.0, alpha * 2)
 		if active and p.fade_inactive and not selected:
 			alpha *= 0.22
 		width = p.line_width + (0.7 if selected else 0)
-		if self.axis < 0:
+		if self.axis < 0 and self.kind != 'TRACKBALL':
 			if self.kind == 'SCALE':
 				width = p.center_line_width + (0.7 if selected else 0)
 			_capture_screen_control(self,context,color,alpha,width)
@@ -142,6 +144,12 @@ class UTG_GT_handle(bpy.types.Gizmo):
 
 		def project(co):
 			return location_3d_to_region_2d(context.region, context.region_data, matrix @ Vector(co))
+
+		if self.kind == 'TRACKBALL':
+			center, edge = project((0,0,0)), project((1,0,0))
+			if center is not None and edge is not None and (mouse-center).length_squared <= (edge-center).length_squared:
+				return 0
+			return -1
 
 		threshold = 7 * context.preferences.system.ui_scale
 		if self.kind == 'MOVE' and self.axis >= 3:
@@ -242,7 +250,7 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 	def draw_prepare(self, context):
 		p = settings.preferences(context)
 		active = interaction.current(context)
-		if active:
+		if active and active.kind != 'TRACKBALL':
 			# Capture one current pose before drawing any handles or overlays.
 			# A timer/post-pixel sample leaves the handles on the previous frame.
 			active.sample()
@@ -326,5 +334,42 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				toward = basis.transposed() @ toward_camera
 				gz.lines,gz.rear_lines,gz.rear_alpha = geometry.front_half(p.arc_radius,toward)
 				gz.tris = []
+
+class UTG_GGT_trackball(bpy.types.GizmoGroup):
+	bl_idname = 'UTG_GGT_trackball'
+	bl_label = 'Universal Trackball Rotation'
+	bl_space_type = 'VIEW_3D'
+	bl_region_type = 'WINDOW'
+	bl_options = {'3D', 'PERSISTENT', 'SHOW_MODAL_ALL'}
+
+	@classmethod
+	def poll(cls, context):
+		return UTG_GGT_universal.poll(context) and settings.preferences(context).trackball_opacity > 0
+
+	@classmethod
+	def setup_keymap(cls, keyconfig):
+		return UTG_GGT_universal.setup_keymap(keyconfig)
+
+	def setup(self, context):
+		self.handle = self.gizmos.new(UTG_GT_handle.bl_idname)
+		self.handle.kind = 'TRACKBALL'
+		self.handle.lines, self.handle.tris = geometry.dot(1.0)
+		self.handle.operator_properties = self.handle.target_set_operator('transform.trackball')
+
+	def invoke_prepare(self, context, gizmo):
+		interaction.prepare(context, gizmo)
+
+	def draw_prepare(self, context):
+		p = settings.preferences(context)
+		active = interaction.current(context)
+		center = active.display_center if active else ctx.pivot(context)
+		pixel = ctx.world_per_pixel(context, center) if center is not None else None
+		self.handle.hide = pixel is None or p.trackball_opacity <= 0
+		if self.handle.hide:
+			return
+		scale = pixel * context.preferences.view.gizmo_size * p.size * p.arc_radius * p.trackball_scale
+		self.handle.matrix_basis = _matrix(center, ctx.view_basis(context), scale)
+		self.handle.color = p.color_center
+		self.handle.base_alpha = p.trackball_opacity
 
 CLASSES = (UTG_GT_handle, UTG_GGT_universal)
