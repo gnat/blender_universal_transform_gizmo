@@ -68,6 +68,11 @@ Gizmo quick hide.
 
 ## 🌘 Change Log
 
+### 1.5.1
+
+* Auto-trim decimal places for whole units (+5.00 display becomes +5).
+* Special thanks YAZZ for all the testing! 
+
 ### 1.5.0
 
 * Pose Mode support.
