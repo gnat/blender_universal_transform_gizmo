@@ -234,12 +234,21 @@ class Session:
 								if abs(dot) + abs(cross) > 1e-12 else number)
 
 	def text(self, context):
-		if self.kind == 'TRACKBALL':
-			return '\n'.join(f'{axis}  {math.degrees(angle):+.2f}°   {angle:+.3f} r.'
-							for axis, angle in zip('XY', self.trackball_angles) if abs(angle) >= TRACKBALL_MIN_ANGLE)
-		if self.kind == 'ROTATE':
-			name = 'XYZ'[self.axis] if self.axis >= 0 else 'Screen'
-			return f'{name}  {math.degrees(self.angle):+.2f}°   {self.angle:+.3f} r.'
+		if self.kind in {'ROTATE', 'TRACKBALL'}:
+			if self.kind == 'TRACKBALL':
+				angles = [(axis, angle) for axis, angle in zip('XY', self.trackball_angles)
+							if abs(angle) >= TRACKBALL_MIN_ANGLE]
+			else:
+				name = 'XYZ'[self.axis] if self.axis >= 0 else 'Screen'
+				angles = [(name, self.angle)]
+			show_radians = settings.preferences(context).show_radians
+			lines = []
+			for name, angle in angles:
+				line = f'{name}  {math.degrees(angle):+.2f}°'
+				if show_radians:
+					line += f'   {angle:+.3f} r'
+				lines.append(line)
+			return '\n'.join(lines)
 		if self.kind == 'SCALE':
 			if self.axis < 0:
 				factor = sum(self.factors) / 3
@@ -330,7 +339,8 @@ def _draw_pie():
 		gpu.state.depth_test_set(depth)
 
 def _draw_trackball_pies(s, p):
-	colors = ((0.68, 0.25, 0.04), (1.0, 0.52, 0.12))
+	brightness = p.trackball_pie_brightness
+	colors = (tuple(channel * brightness for channel in p.color_hover), p.color_hover)
 	for axis in (1, 0):
 		angle = s.trackball_angles[axis]
 		if abs(angle) < TRACKBALL_MIN_ANGLE:

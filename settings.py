@@ -56,12 +56,14 @@ class _Defaults:
 	arc_radius = 0.96
 	trackball_scale = 1.0
 	trackball_opacity = 0.06
+	trackball_pie_brightness = 0.7
 	screen_radius = 1.15
 	center_radius = 0.18
 	center_line_width = 3.75
 	center_dot_radius = 0.06
 	font_size = 15.0
 	fade_inactive = True
+	show_radians = False
 	toggle_size = 24.0
 	toggle_distance = 1.0
 	toggle_vertical_offset = 1.0
@@ -83,6 +85,7 @@ def draw_appearance(layout, p):
 	col.use_property_split = False
 	col.prop(p, 'arrows_both_directions')
 	col.prop(p, 'fade_inactive')
+	col.prop(p, 'show_radians')
 	layout.use_property_split = True
 	layout.prop(p, 'size')
 	layout.prop(p, 'opacity')
@@ -96,6 +99,7 @@ def draw_appearance(layout, p):
 	col.prop(p, 'screen_radius')
 	col.prop(p, 'trackball_scale')
 	col.prop(p, 'trackball_opacity')
+	col.prop(p, 'trackball_pie_brightness')
 	col.prop(p, 'cube_size')
 	col.prop(p, 'center_radius')
 	col.prop(p, 'center_line_width')
@@ -153,6 +157,9 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 									description='Scale of the trackball relative to the axis rotation radius', update=redraw)
 	trackball_opacity: FloatProperty(name='Trackball Opacity', default=_Defaults.trackball_opacity, min=0, max=1,
 									description='Opacity of the trackball fill. Zero hides the trackball', update=redraw)
+	trackball_pie_brightness: FloatProperty(name='Trackball Pie Brightness', default=_Defaults.trackball_pie_brightness,
+											min=0, max=1,
+											description='Brightness of the View X pie relative to Hover Color', update=redraw)
 	screen_radius: FloatProperty(name='Rotation Radius (Screen)', default=1.15, min=0.6, max=2, update=redraw)
 	center_radius: FloatProperty(name='Scale Ring Radius', default=0.16, min=0.1, max=0.3, update=redraw)
 	center_line_width: FloatProperty(name='Scale Ring Width', default=3.75, min=1, max=12,
@@ -161,6 +168,8 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 									description='Radius of the center screen-space move dot in gizmo units', update=redraw)
 	font_size: FloatProperty(name='Readout Font Size', default=15, min=10, max=30, update=redraw)
 	fade_inactive: BoolProperty(name='Fade Other Handles During Drag', default=True, update=redraw)
+	show_radians: BoolProperty(name='Show Radians', default=_Defaults.show_radians,
+								description='Show radians alongside degrees in rotation readouts', update=redraw)
 	toggle_size: FloatProperty(name='Toggle Icon Size', default=24, min=8, max=96, precision=0,
 								description='Icon size in screen pixels before Blender UI scaling', update=redraw)
 	toggle_distance: FloatProperty(name='Toggle Distance', default=1.0, min=0.5, max=8,
@@ -197,6 +206,7 @@ class UTG_OT_reset(bpy.types.Operator):
 		for key in _Defaults.__dict__:
 			if not key.startswith('_'):
 				p.property_unset(key)
+		context.preferences.is_dirty = True
 		redraw()
 		return {'FINISHED'}
 
