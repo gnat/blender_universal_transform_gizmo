@@ -5,6 +5,7 @@ The observer passes input to Blender's modal transform. It never writes selectio
 data, changes the snap configuration, or adds an extra undo step.
 """
 import math
+import re
 import bpy
 import blf
 import gpu
@@ -16,6 +17,9 @@ from . import context as ctx, settings
 _SESSION = None
 _DRAW = []
 TRACKBALL_MIN_ANGLE = 0.00005
+
+def _trim_zero_decimals(text):
+	return re.sub(r'\.0+(?!\d)', '', text)
 
 def current(context=None):
 	s = _SESSION
@@ -254,12 +258,12 @@ class Session:
 				if show_radians:
 					line += f'   {angle:+.3f} r'
 				lines.append(line)
-			return '\n'.join(lines)
+			return _trim_zero_decimals('\n'.join(lines))
 		if self.kind == 'SCALE':
 			if self.axis < 0:
 				factor = sum(self.factors) / 3
-				return f'XYZ  {factor:.4f}×   ({(factor - 1)*100:+.2f}%)'
-			return f'{"XYZ"[self.axis]}  {self.factors[self.axis]:.4f}×   ({(self.factors[self.axis]-1)*100:+.2f}%)'
+				return _trim_zero_decimals(f'XYZ  {factor:.4f}×   ({(factor - 1)*100:+.2f}%)')
+			return _trim_zero_decimals(f'{"XYZ"[self.axis]}  {self.factors[self.axis]:.4f}×   ({(self.factors[self.axis]-1)*100:+.2f}%)')
 		basis_inverse = self.basis.inverted_safe() if self.mode == 'POSE' and self.orient == 'GIMBAL' else self.basis.transposed()
 		values = basis_inverse @ self.delta
 		axes = [i for i, enabled in enumerate(self.constraint) if enabled] if self.axis >= 0 else [i for i, v in enumerate(self.delta) if abs(v) > 1e-7]
@@ -274,7 +278,7 @@ class Session:
 				return ('+' if value >= 0 else '') + bpy.utils.units.to_string(units.system, 'LENGTH', value * units.scale_length, precision=4)
 			return f'{value:+.4f}'
 
-		return '   '.join(f'{"XYZ"[i]}  {fmt(values[i])}' for i in axes)
+		return _trim_zero_decimals('   '.join(f'{"XYZ"[i]}  {fmt(values[i])}' for i in axes))
 
 def _draw_text():
 	context = bpy.context
