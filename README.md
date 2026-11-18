@@ -68,6 +68,11 @@ Gizmo quick hide.
 
 ## 🌘 Change Log
 
+### 1.4.0
+
+* New Trackball Rotation control (Arcball) with 2 axis visual.
+* Special thanks YAZZ for all the testing!
+
 ### 1.3.1
 
 * Hide when built in gizmos are explicitly selected.
