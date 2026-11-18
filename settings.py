@@ -54,6 +54,8 @@ class _Defaults:
 	plane_size = 0.34
 	plane_offset = 0.44
 	arc_radius = 0.96
+	trackball_scale = 1.0
+	trackball_opacity = 0.06
 	screen_radius = 1.15
 	center_radius = 0.18
 	center_line_width = 3.75
@@ -89,9 +91,12 @@ def draw_appearance(layout, p):
 	layout.prop(p, 'color_hover')
 	col = layout.column(align=True)
 	for key in ('arrow_length', 'arrow_head_width', 'arrow_head_length',
-				'cube_size', 'plane_size', 'plane_offset', 'center_dot_radius', 'arc_radius'):
+				'plane_size', 'plane_offset', 'center_dot_radius', 'arc_radius'):
 		col.prop(p, key)
 	col.prop(p, 'screen_radius')
+	col.prop(p, 'trackball_scale')
+	col.prop(p, 'trackball_opacity')
+	col.prop(p, 'cube_size')
 	col.prop(p, 'center_radius')
 	col.prop(p, 'center_line_width')
 	col.prop(p, 'font_size')
@@ -144,8 +149,12 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	plane_size: FloatProperty(name='Location Square Size', default=0.34, min=0.08, max=0.65, update=redraw)
 	plane_offset: FloatProperty(name='Location Square Offset', default=0.44, min=0.15, max=1.0, update=redraw)
 	arc_radius: FloatProperty(name='Rotation Radius', default=0.96, min=0.5, max=1.6, update=redraw)
-	screen_radius: FloatProperty(name='Screen Rotation Radius', default=1.15, min=0.6, max=2, update=redraw)
-	center_radius: FloatProperty(name='Uniform Scale Ring Radius', default=0.16, min=0.1, max=0.3, update=redraw)
+	trackball_scale: FloatProperty(name='Trackball Scale', default=_Defaults.trackball_scale, min=0.25, max=2,
+									description='Scale of the trackball relative to the axis rotation radius', update=redraw)
+	trackball_opacity: FloatProperty(name='Trackball Opacity', default=_Defaults.trackball_opacity, min=0, max=1,
+									description='Opacity of the trackball fill. Zero hides the trackball', update=redraw)
+	screen_radius: FloatProperty(name='Rotation Radius (Screen)', default=1.15, min=0.6, max=2, update=redraw)
+	center_radius: FloatProperty(name='Scale Ring Radius', default=0.16, min=0.1, max=0.3, update=redraw)
 	center_line_width: FloatProperty(name='Scale Ring Width', default=3.75, min=1, max=12,
 									description='Line width of the uniform scale ring in pixels', update=redraw)
 	center_dot_radius: FloatProperty(name='Location Dot Size', default=0.06, min=0.01, max=0.15,
