@@ -43,10 +43,12 @@ def _draw_batch(primitive, verts, color, width=2.0):
 class Session:
 	def __init__(self, context, mouse, kind, axis):
 		self.kind, self.axis = kind, axis
+		self.mode = context.mode
 		self.direction = 1
 		self.area, self.region, self.window = context.area, context.region, context.window
 		self.items = ctx.selection(context)
 		self.center = ctx.pivot(context, self.items)
+		self.display_center = self.center
 		p = settings.preferences(context)
 		self.orient, self.basis = ctx.orientation(context)
 		self.draw_move_basis = self.basis.copy()
@@ -63,8 +65,12 @@ class Session:
 		self.sample_items = self.items[::stride][:256]
 		self.points = [ctx.world_point(ob, v) for ob, v in self.sample_items]
 		self.mean = sum(self.points, Vector()) / len(self.points)
-		self.object = context.active_object if context.mode == 'OBJECT' else None
-		self.linear = self.object.matrix_world.to_3x3().copy() if self.object else None
+		self.matrix_target = None
+		if self.mode == 'POSE':
+			self.matrix_target = ctx.pose_reference(context, self.items)
+		elif self.mode == 'OBJECT' and context.active_object:
+			self.matrix_target = (context.active_object, None)
+		self.linear = ctx.world_matrix(*self.matrix_target).to_3x3() if self.matrix_target and kind != 'MOVE' else None
 		self.delta = Vector()
 		self.factors = Vector((1, 1, 1))
 		self.angle = 0.0
@@ -92,13 +98,13 @@ class Session:
 			self.trackball_field = 0
 			self.trackball_unit = context.scene.unit_settings.system_rotation
 			self.trackball_edges = None
-			if not self.object and context.tool_settings.transform_pivot_point == 'INDIVIDUAL_ORIGINS':
+			if self.matrix_target is None and context.tool_settings.transform_pivot_point == 'INDIVIDUAL_ORIGINS':
 				self.trackball_edges = []
 				for ob, v in self.sample_items:
 					edge = next((e for e in v.link_edges if e.select and not e.hide), None)
 					if edge:
 						self.trackball_edges.append((ob, v, edge.other_vert(v)))
-			if not self.object:
+			if self.matrix_target is None:
 				self.trackball_vectors = self._trackball_vectors(self.points, self.mean)
 
 	def _start_direction(self, context, mouse):
@@ -121,7 +127,7 @@ class Session:
 		center = mean if len(points) > 1 else self.center
 		return [p - center for p in points]
 
-	def _sample_trackball(self, points, mean):
+	def _sample_trackball(self, points, mean, linear):
 		# The mouse input disambiguates turns and selections with no observable rotation.
 		x, y = self.trackball_input
 		if self.trackball_snap != self.trackball_ctrl:
@@ -137,8 +143,8 @@ class Session:
 				components[i] = value if self.trackball_unit == 'RADIANS' else math.radians(value)
 		hint = self.view_basis @ Vector((*components, 0))
 		axis, angle = hint.normalized(), hint.length
-		if self.object:
-			change = self.object.matrix_world.to_3x3() @ self.linear.inverted_safe()
+		if linear is not None:
+			change = linear @ self.linear.inverted_safe()
 			axis, angle = change.to_quaternion().to_axis_angle()
 		else:
 			pairs = list(zip(self.trackball_vectors, self._trackball_vectors(points, mean)))
@@ -158,10 +164,6 @@ class Session:
 			axis = hint.normalized()
 		angle += round((hint.dot(axis) - angle) / math.tau) * math.tau
 		self.trackball_angles = tuple(angle * axis.dot(self.view_basis.col[i]) for i in range(2))
-
-	@property
-	def display_center(self):
-		return self.center + self.delta if self.kind == 'MOVE' else self.center
 
 	def record_event(self, event):
 		if self.kind == 'TRACKBALL':
@@ -194,11 +196,15 @@ class Session:
 		points = [ctx.world_point(ob, v) for ob, v in self.sample_items]
 		mean = sum(points, Vector()) / len(points)
 		self.delta = mean - self.mean
+		if self.kind == 'MOVE':
+			self.display_center = ctx.pivot(bpy.context, self.items) if self.mode == 'POSE' else self.center + self.delta
+			return
+		linear = ctx.world_matrix(*self.matrix_target).to_3x3() if self.matrix_target else None
 		if self.kind == 'TRACKBALL':
-			self._sample_trackball(points, mean)
+			self._sample_trackball(points, mean, linear)
 		elif self.kind == 'SCALE':
-			if self.object:
-				change = self.object.matrix_world.to_3x3() @ self.linear.inverted_safe()
+			if linear is not None:
+				change = linear @ self.linear.inverted_safe()
 				self.factors = Vector(tuple(u.dot(change @ u) for u in self.basis.col))
 			else:
 				before = [self.basis.transposed() @ (p - self.center) for p in self.points]
@@ -208,9 +214,9 @@ class Session:
 					for i in range(3)))
 		elif self.kind == 'ROTATE':
 			normal = self.rot_axis
-			if self.object:
+			if linear is not None:
 				before = list(self.linear.col)
-				after = list(self.object.matrix_world.to_3x3().col)
+				after = list(linear.col)
 			else:
 				before = [p - self.center for p in self.points]
 				after = [p - self.center for p in points]
@@ -254,7 +260,8 @@ class Session:
 				factor = sum(self.factors) / 3
 				return f'XYZ  {factor:.4f}×   ({(factor - 1)*100:+.2f}%)'
 			return f'{"XYZ"[self.axis]}  {self.factors[self.axis]:.4f}×   ({(self.factors[self.axis]-1)*100:+.2f}%)'
-		values = self.basis.transposed() @ self.delta
+		basis_inverse = self.basis.inverted_safe() if self.mode == 'POSE' and self.orient == 'GIMBAL' else self.basis.transposed()
+		values = basis_inverse @ self.delta
 		axes = [i for i, enabled in enumerate(self.constraint) if enabled] if self.axis >= 0 else [i for i, v in enumerate(self.delta) if abs(v) > 1e-7]
 		if self.axis < 0:
 			values = self.delta
@@ -384,8 +391,12 @@ def prepare(context, gizmo):
 	if s.kind != 'TRACKBALL':
 		props.constraint_axis = s.constraint
 		props.orient_type = s.orient
-		props.orient_matrix = s.basis
-		props.orient_matrix_type = s.orient
+		if s.mode == 'POSE':
+			props.property_unset('orient_matrix')
+			props.property_unset('orient_matrix_type')
+		else:
+			props.orient_matrix = s.basis
+			props.orient_matrix_type = s.orient
 		if s.kind == 'ROTATE':
 			props.orient_axis = 'XYZ'[s.axis] if s.axis >= 0 else 'Z'
 	else:

@@ -2,6 +2,7 @@
 import bpy
 from bpy.props import BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty
 from . import keymaps
+from . import context as ctx
 
 PACKAGE = __package__
 ORIENTATION_ITEMS = [
@@ -233,7 +234,7 @@ class UTG_PT_main(bpy.types.Panel):
 		draw_toggles(layout.column(), p)
 
 def draw_header(self, context):
-	if context.mode in {'OBJECT', 'EDIT_MESH'}:
+	if context.mode in ctx.SUPPORTED_MODES:
 		self.layout.operator('view3d.universal_gizmo_toggle', text='', icon='GIZMO',
 						depress=context.window_manager.universal_gizmo_enabled).keep_button = False
 

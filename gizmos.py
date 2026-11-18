@@ -214,7 +214,7 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 	def available(cls, context):
 		if not getattr(context.window_manager, 'universal_gizmo_enabled', False):
 			return False
-		if context.mode not in {'OBJECT', 'EDIT_MESH'} or not context.active_object:
+		if context.mode not in ctx.SUPPORTED_MODES or not context.active_object:
 			return False
 		tool = context.workspace.tools.from_space_view3d_mode(context.mode, create=False)
 		if tool and tool.idname in {'builtin.move', 'builtin.rotate', 'builtin.scale', 'builtin.scale_cage', 'builtin.transform'}:
@@ -263,7 +263,7 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				gz.hide = True
 			return
 		scale = pixel * context.preferences.view.gizmo_size * p.size
-		_, move_basis = ctx.orientation(context)
+		orientation, move_basis = ctx.orientation(context)
 		scale_basis = move_basis
 		view_basis = ctx.view_basis(context)
 		if active:
@@ -312,6 +312,10 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 			a = axis % 3
 			source_basis = scale_basis if kind == 'SCALE' else move_basis
 			basis = _axis_basis(source_basis, a)
+			if kind == 'ROTATE' and context.mode == 'POSE' and orientation == 'GIMBAL':
+				z = basis.col[2]
+				x = z.orthogonal().normalized()
+				basis = Matrix((x, z.cross(x), z)).transposed()
 			if gz.direction < 0:
 				basis = basis @ Matrix.Diagonal((1,-1,-1))
 			gz.matrix_basis = _matrix(center, basis, scale)

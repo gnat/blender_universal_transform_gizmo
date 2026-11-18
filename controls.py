@@ -42,7 +42,14 @@ def orientation_values(context):
 	return [value for value in values if value in enabled or (value not in builtins and 'CUSTOM' in enabled)]
 
 def proportional_property(context):
-	return 'use_proportional_edit_objects' if context.mode == 'OBJECT' else 'use_proportional_edit'
+	if context.mode == 'OBJECT':
+		return 'use_proportional_edit_objects'
+	if context.mode == 'EDIT_MESH':
+		return 'use_proportional_edit'
+
+def visible_kinds(context, preferences):
+	return [kind for kind, name in VISIBILITY.items() if getattr(preferences, name)
+			and (kind != 'PROPORTIONAL' or proportional_property(context) is not None)]
 
 def state(context, kind):
 	tool_settings = context.scene.tool_settings
@@ -59,7 +66,8 @@ def state(context, kind):
 	if kind == 'SNAP':
 		enabled = tool_settings.use_snap
 		return ('On' if enabled else 'Off'), ('SNAP_ON' if enabled else 'SNAP_OFF'), enabled
-	enabled = getattr(tool_settings, proportional_property(context))
+	prop = proportional_property(context)
+	enabled = prop is not None and getattr(tool_settings, prop)
 	icon = 'PROP_OFF'
 	if enabled:
 		icon = 'PROP_ON'
@@ -78,6 +86,8 @@ def cycle(context, kind, reverse=False):
 		tool_settings.use_snap = not tool_settings.use_snap
 	elif kind == 'PROPORTIONAL':
 		prop = proportional_property(context)
+		if prop is None:
+			return
 		setattr(tool_settings, prop, not getattr(tool_settings, prop))
 	else:
 		if kind == 'ORIENTATION':
@@ -146,7 +156,7 @@ class UTG_GGT_controls(bpy.types.GizmoGroup):
 	@classmethod
 	def poll(cls, context):
 		p = settings.preferences(context)
-		return gizmos.UTG_GGT_universal.available(context) and any(getattr(p, prop) for prop in VISIBILITY.values())
+		return gizmos.UTG_GGT_universal.available(context) and bool(visible_kinds(context, p))
 
 	@classmethod
 	def setup_keymap(cls, keyconfig):
@@ -195,7 +205,7 @@ class UTG_GGT_controls(bpy.types.GizmoGroup):
 				button.hide = True
 			return
 		clip = context.region_data.window_matrix @ context.region_data.view_matrix @ center.to_4d()
-		visible = [kind for kind in self.buttons if getattr(p, VISIBILITY[kind])]
+		visible = visible_kinds(context, p)
 		handles_visible = settings.handles_visible(context)
 		pixel = ctx.world_per_pixel(context, center)
 		if clip.w <= 1e-8 or not visible or pixel is None:
