@@ -105,6 +105,15 @@ def pivot(context, items=None):
 			matrix = context.active_object.matrix_world
 			inverse = matrix.inverted_safe()
 			return matrix @ _bounds_center([inverse @ point for point in points])
+	elif context.mode == 'EDIT_MESH':
+		matrices = {}
+		points = []
+		for ob, vert in items:
+			matrix = matrices.get(ob)
+			if matrix is None:
+				matrix = ob.matrix_world.copy()
+				matrices[ob] = matrix
+			points.append(matrix @ vert.co)
 	else:
 		points = [world_point(ob, v) for ob, v in items]
 	if mode == 'BOUNDING_BOX_CENTER':
