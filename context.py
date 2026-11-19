@@ -13,6 +13,12 @@ class Selection(list):
 		super().__init__()
 		self.bmeshes = []
 
+def has_selection(context):
+	if context.mode == 'EDIT_MESH':
+		return any(ob.type == 'MESH' and ob.data.total_vert_sel > 0
+					for ob in context.objects_in_mode_unique_data)
+	return bool(selection(context))
+
 def selection(context):
 	if context.mode == 'POSE':
 		bones = [bone for bone in context.selected_pose_bones or ()
@@ -138,7 +144,6 @@ def orientation(context):
 	local = ob.matrix_world.to_quaternion().to_matrix()
 	if name == 'NORMAL' and context.mode == 'EDIT_MESH':
 		bm = bmesh.from_edit_mesh(ob.data)
-		faces = [f for f in bm.faces if f.select and not f.hide]
 		elem = bm.select_history.active
 		face = bm.faces.active
 		normal = Vector()
@@ -146,14 +151,16 @@ def orientation(context):
 		if face is not None and face.select:
 			normal = face.normal.copy()
 			tangent = face.verts[1].co - face.verts[0].co
-		elif faces:
-			normal = sum((f.normal for f in faces), Vector())
-			tangent = faces[0].verts[1].co - faces[0].verts[0].co
-		elif isinstance(elem, bmesh.types.BMEdge):
-			normal = sum((v.normal for v in elem.verts), Vector())
-			tangent = elem.verts[1].co - elem.verts[0].co
 		else:
-			normal = sum((v.normal for v in bm.verts if v.select and not v.hide), Vector())
+			faces = [f for f in bm.faces if f.select and not f.hide]
+			if faces:
+				normal = sum((f.normal for f in faces), Vector())
+				tangent = faces[0].verts[1].co - faces[0].verts[0].co
+			elif isinstance(elem, bmesh.types.BMEdge):
+				normal = sum((v.normal for v in elem.verts), Vector())
+				tangent = elem.verts[1].co - elem.verts[0].co
+			else:
+				normal = sum((v.normal for v in bm.verts if v.select and not v.hide), Vector())
 		if normal.length_squared > 1e-12:
 			z = (ob.matrix_world.to_3x3().inverted_safe().transposed() @ normal).normalized()
 			x = ob.matrix_world.to_3x3() @ tangent

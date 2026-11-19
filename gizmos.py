@@ -6,8 +6,15 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 from . import settings, geometry, interaction
 from . import context as ctx
 
-_BACKGROUND_HANDLES = {}
+_DRAW_STATE = {}
 _SCREEN_CONTROLS = {}
+
+def draw_center(context):
+	key = (context.window.as_pointer(), context.region.as_pointer())
+	if key in _DRAW_STATE:
+		return _DRAW_STATE[key][0]
+	active = interaction.current(context)
+	return active.display_center if active else ctx.pivot(context)
 
 def _capture_screen_control(gizmo, context, color, alpha, width):
 	view = context.region_data
@@ -56,7 +63,7 @@ def _draw_screen_controls():
 		gpu.state.depth_test_set(depth)
 
 def clear_draw_state():
-	_BACKGROUND_HANDLES.clear()
+	_DRAW_STATE.clear()
 	_SCREEN_CONTROLS.clear()
 
 class UTG_GT_handle(bpy.types.Gizmo):
@@ -169,7 +176,9 @@ class UTG_GT_handle(bpy.types.Gizmo):
 	def draw_select(self, context, select_id):
 		if self.hide or interaction.current(context):
 			return
-		self.line_width = (2.5 if self.kind == 'MOVE' and self.axis >= 3 else 7) * context.preferences.system.ui_scale
+		width = (2.5 if self.kind == 'MOVE' and self.axis >= 3 else 7) * context.preferences.system.ui_scale
+		if abs(self.line_width - width) > 1e-5:
+			self.line_width = width
 		if self.tris:
 			self.draw_custom_shape(self.new_custom_shape('TRIS', self.tris), select_id=select_id)
 		lines = self.lines + (self.rear_lines if self.rear_alpha > 0.25 else [])
@@ -234,7 +243,7 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 		# Hide during unrelated keyboard transforms, but retain our active handles.
 		if interaction.current(context) is None and any(op.bl_idname.startswith('TRANSFORM_OT_') for op in context.window.modal_operators):
 			return False
-		return bool(ctx.selection(context))
+		return ctx.has_selection(context)
 
 	def setup(self, context):
 		self.handles = []
@@ -262,7 +271,11 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 			# A timer/post-pixel sample leaves the handles on the previous frame.
 			active.sample()
 		center = active.display_center if active else ctx.pivot(context)
+		key = (context.window.as_pointer(), context.region.as_pointer())
+		_DRAW_STATE[key] = (center, self.handles)
 		if center is None:
+			for gz in self.handles:
+				gz.hide = True
 			return
 		pixel = ctx.world_per_pixel(context, center)
 		if pixel is None:
@@ -346,9 +359,6 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				gz.lines,gz.rear_lines,gz.rear_alpha = geometry.front_half(p.arc_radius,toward)
 				gz.tris = []
 
-		key = (context.window.as_pointer(), context.region.as_pointer())
-		_BACKGROUND_HANDLES[key] = self.handles
-
 class UTG_GGT_trackball(bpy.types.GizmoGroup):
 	bl_idname = 'UTG_GGT_trackball'
 	bl_label = 'Universal Trackball Rotation'
@@ -372,11 +382,13 @@ class UTG_GGT_trackball(bpy.types.GizmoGroup):
 
 	def draw_prepare(self, context):
 		p = settings.preferences(context)
-		active = interaction.current(context)
-		center = active.display_center if active else ctx.pivot(context)
-		pixel = ctx.world_per_pixel(context, center) if center is not None else None
 		key = (context.window.as_pointer(), context.region.as_pointer())
-		handles = _BACKGROUND_HANDLES.pop(key, ())
+		state = _DRAW_STATE.pop(key, None)
+		if state is None:
+			center, handles = draw_center(context), ()
+		else:
+			center, handles = state
+		pixel = ctx.world_per_pixel(context, center) if center is not None else None
 		# Preserve our handle priority while leaving native tool handles in front.
 		selection_depth = context.space_data.clip_end * 2
 		self.handle.select_bias = -selection_depth * (len(handles) + 1)

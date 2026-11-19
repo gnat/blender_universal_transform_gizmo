@@ -199,7 +199,7 @@ class UTG_GGT_controls(bpy.types.GizmoGroup):
 	def draw_prepare(self, context):
 		p = settings.preferences(context)
 		active = interaction.current(context)
-		center = active.display_center if active else ctx.pivot(context)
+		center = gizmos.draw_center(context)
 		if center is None or context.region_data is None:
 			for button in self.buttons.values():
 				button.hide = True
