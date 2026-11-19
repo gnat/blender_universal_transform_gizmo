@@ -6,7 +6,7 @@ from bpy_extras.view3d_utils import location_3d_to_region_2d
 from . import settings, geometry, interaction
 from . import context as ctx
 
-_SCREEN_DRAW_HANDLE = None
+_BACKGROUND_HANDLES = {}
 _SCREEN_CONTROLS = {}
 
 def _capture_screen_control(gizmo, context, color, alpha, width):
@@ -55,16 +55,8 @@ def _draw_screen_controls():
 		gpu.state.blend_set(blend)
 		gpu.state.depth_test_set(depth)
 
-def register_draw_handlers():
-	global _SCREEN_DRAW_HANDLE
-	if _SCREEN_DRAW_HANDLE is None:
-		_SCREEN_DRAW_HANDLE = bpy.types.SpaceView3D.draw_handler_add(_draw_screen_controls,(),'WINDOW','POST_PIXEL')
-
-def unregister_draw_handlers():
-	global _SCREEN_DRAW_HANDLE
-	if _SCREEN_DRAW_HANDLE is not None:
-		bpy.types.SpaceView3D.draw_handler_remove(_SCREEN_DRAW_HANDLE,'WINDOW')
-		_SCREEN_DRAW_HANDLE = None
+def clear_draw_state():
+	_BACKGROUND_HANDLES.clear()
 	_SCREEN_CONTROLS.clear()
 
 class UTG_GT_handle(bpy.types.Gizmo):
@@ -88,6 +80,9 @@ class UTG_GT_handle(bpy.types.Gizmo):
 		self.use_tooltip = True
 
 	def draw(self, context):
+		pass
+
+	def draw_background(self, context):
 		p = settings.preferences(context)
 		active = interaction.current(context)
 		selected = self.is_highlight or (active and active.kind == self.kind and active.axis == self.axis
@@ -171,10 +166,25 @@ class UTG_GT_handle(bpy.types.Gizmo):
 						return 0
 		return -1
 
+	def draw_select(self, context, select_id):
+		if self.hide or interaction.current(context):
+			return
+		self.line_width = (2.5 if self.kind == 'MOVE' and self.axis >= 3 else 7) * context.preferences.system.ui_scale
+		if self.tris:
+			self.draw_custom_shape(self.new_custom_shape('TRIS', self.tris), select_id=select_id)
+		lines = self.lines + (self.rear_lines if self.rear_alpha > 0.25 else [])
+		if lines:
+			self.draw_custom_shape(self.new_custom_shape('LINES', lines), select_id=select_id)
+
 	def modal(self, context, event, tweak):
 		active = interaction.current(context)
 		if active:
 			active.record_event(event)
+		return {'RUNNING_MODAL'}
+
+	def invoke(self, context, event):
+		self.mouse = (event.mouse_region_x, event.mouse_region_y)
+		interaction.prepare(context, self)
 		return {'RUNNING_MODAL'}
 
 	def exit(self, context, cancel):
@@ -243,9 +253,6 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 			native = {'MOVE': 'transform.translate', 'ROTATE': 'transform.rotate', 'SCALE': 'transform.resize'}[kind]
 			gz.operator_properties = gz.target_set_operator(native)
 			self.handles.append(gz)
-
-	def invoke_prepare(self, context, gizmo):
-		interaction.prepare(context, gizmo)
 
 	def draw_prepare(self, context):
 		p = settings.preferences(context)
@@ -339,6 +346,9 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				gz.lines,gz.rear_lines,gz.rear_alpha = geometry.front_half(p.arc_radius,toward)
 				gz.tris = []
 
+		key = (context.window.as_pointer(), context.region.as_pointer())
+		_BACKGROUND_HANDLES[key] = self.handles
+
 class UTG_GGT_trackball(bpy.types.GizmoGroup):
 	bl_idname = 'UTG_GGT_trackball'
 	bl_label = 'Universal Trackball Rotation'
@@ -348,7 +358,7 @@ class UTG_GGT_trackball(bpy.types.GizmoGroup):
 
 	@classmethod
 	def poll(cls, context):
-		return UTG_GGT_universal.poll(context) and settings.preferences(context).trackball_opacity > 0
+		return UTG_GGT_universal.poll(context)
 
 	@classmethod
 	def setup_keymap(cls, keyconfig):
@@ -360,20 +370,28 @@ class UTG_GGT_trackball(bpy.types.GizmoGroup):
 		self.handle.lines, self.handle.tris = geometry.dot(1.0)
 		self.handle.operator_properties = self.handle.target_set_operator('transform.trackball')
 
-	def invoke_prepare(self, context, gizmo):
-		interaction.prepare(context, gizmo)
-
 	def draw_prepare(self, context):
 		p = settings.preferences(context)
 		active = interaction.current(context)
 		center = active.display_center if active else ctx.pivot(context)
 		pixel = ctx.world_per_pixel(context, center) if center is not None else None
+		key = (context.window.as_pointer(), context.region.as_pointer())
+		handles = _BACKGROUND_HANDLES.pop(key, ())
+		# Preserve our handle priority while leaving native tool handles in front.
+		selection_depth = context.space_data.clip_end * 2
+		self.handle.select_bias = -selection_depth * (len(handles) + 1)
 		self.handle.hide = pixel is None or p.trackball_opacity <= 0
-		if self.handle.hide:
-			return
-		scale = pixel * context.preferences.view.gizmo_size * p.size * p.arc_radius * p.trackball_scale
-		self.handle.matrix_basis = _matrix(center, ctx.view_basis(context), scale)
-		self.handle.color = p.color_center
-		self.handle.base_alpha = p.trackball_opacity
+		if not self.handle.hide:
+			scale = pixel * context.preferences.view.gizmo_size * p.size * p.arc_radius * p.trackball_scale
+			self.handle.matrix_basis = _matrix(center, ctx.view_basis(context), scale)
+			self.handle.color = p.color_center
+			self.handle.base_alpha = p.trackball_opacity
+			self.handle.draw_background(context)
+		# Draw our handles before Blender's native tool gizmos, regardless of their registration order.
+		for priority, handle in enumerate(reversed(handles), 1):
+			if not handle.hide:
+				handle.select_bias = -selection_depth * priority
+				handle.draw_background(context)
+		_draw_screen_controls()
 
 CLASSES = (UTG_GT_handle, UTG_GGT_universal)

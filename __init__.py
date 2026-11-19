@@ -22,13 +22,12 @@ def register():
 		update=settings.redraw,
 	)
 	bpy.types.VIEW3D_HT_header.append(settings.draw_header)
-	gizmos.register_draw_handlers()
 	keymaps.register()
 
 def unregister():
 	interaction.shutdown()
 	keymaps.unregister()
-	gizmos.unregister_draw_handlers()
+	gizmos.clear_draw_state()
 	bpy.types.VIEW3D_HT_header.remove(settings.draw_header)
 	del bpy.types.WindowManager.universal_gizmo_enabled
 	del bpy.types.WindowManager.universal_gizmo_visible
