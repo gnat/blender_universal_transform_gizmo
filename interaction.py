@@ -350,8 +350,7 @@ def _draw_pie():
 		gpu.state.depth_test_set(depth)
 
 def _draw_trackball_pies(s, p):
-	brightness = p.trackball_pie_brightness
-	colors = (tuple(channel * brightness for channel in p.color_hover), p.color_hover)
+	colors = (p.color_hover_2, p.color_hover)
 	for axis in (1, 0):
 		angle = s.trackball_angles[axis]
 		if abs(angle) < TRACKBALL_MIN_ANGLE:

@@ -46,6 +46,7 @@ class _Defaults:
 	opacity = 0.9
 	color_center = (0.96, 0.96, 0.96)
 	color_hover = (1.0, 0.52, 0.12)
+	color_hover_2 = (0.428691, 0.119538, 1.0)
 	line_width = 2.0
 	arrow_length = 2.3
 	arrow_head_width = 0.2
@@ -57,7 +58,6 @@ class _Defaults:
 	arc_radius = 0.96
 	trackball_scale = 1.0
 	trackball_opacity = 0.06
-	trackball_pie_brightness = 0.7
 	screen_radius = 1.15
 	center_radius = 0.18
 	center_line_width = 3.75
@@ -93,6 +93,7 @@ def draw_appearance(layout, p):
 	layout.prop(p, 'line_width')
 	layout.prop(p, 'color_center')
 	layout.prop(p, 'color_hover')
+	layout.prop(p, 'color_hover_2')
 	col = layout.column(align=True)
 	for key in ('arrow_length', 'arrow_head_width', 'arrow_head_length',
 				'plane_size', 'plane_offset', 'center_dot_radius', 'arc_radius'):
@@ -100,7 +101,6 @@ def draw_appearance(layout, p):
 	col.prop(p, 'screen_radius')
 	col.prop(p, 'trackball_scale')
 	col.prop(p, 'trackball_opacity')
-	col.prop(p, 'trackball_pie_brightness')
 	col.prop(p, 'cube_size')
 	col.prop(p, 'center_radius')
 	col.prop(p, 'center_line_width')
@@ -142,8 +142,10 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 	size: FloatProperty(name='Size Multiplier', default=1.0, min=0.4, max=4.0,
 						description="Multiplies Blender's global gizmo size", update=redraw)
 	opacity: FloatProperty(name='Opacity', default=0.9, min=0.05, max=1, update=redraw)
-	color_center: FloatVectorProperty(name='Screen Controls', subtype='COLOR', size=3, default=_Defaults.color_center, min=0, max=1, update=redraw)
-	color_hover: FloatVectorProperty(name='Hover Color', subtype='COLOR', size=3, default=_Defaults.color_hover, min=0, max=1, update=redraw)
+	color_center: FloatVectorProperty(name='Color Base', subtype='COLOR', size=3, default=_Defaults.color_center, min=0, max=1, update=redraw)
+	color_hover: FloatVectorProperty(name='Color Hover', subtype='COLOR', size=3, default=_Defaults.color_hover, min=0, max=1, update=redraw)
+	color_hover_2: FloatVectorProperty(name='Color Hover 2', subtype='COLOR', size=3, default=_Defaults.color_hover_2, min=0, max=1,
+										description='Color of the second trackball rotation pie', update=redraw)
 	line_width: FloatProperty(name='Line Width', default=2.0, min=1, max=6, update=redraw)
 	arrow_length: FloatProperty(name='Arrow Length', default=2.3, min=0.8, max=3.5, update=redraw)
 	arrow_head_width: FloatProperty(name='Arrowhead Width', default=0.2, min=0.04, max=0.5, update=redraw)
@@ -158,9 +160,6 @@ class UTG_Preferences(bpy.types.AddonPreferences):
 									description='Scale of the trackball relative to the axis rotation radius', update=redraw)
 	trackball_opacity: FloatProperty(name='Trackball Opacity', default=_Defaults.trackball_opacity, min=0, max=1,
 									description='Opacity of the trackball fill. Zero hides the trackball', update=redraw)
-	trackball_pie_brightness: FloatProperty(name='Trackball Pie Brightness', default=_Defaults.trackball_pie_brightness,
-											min=0, max=1,
-											description='Brightness of the View X pie relative to Hover Color', update=redraw)
 	screen_radius: FloatProperty(name='Rotation Radius (Screen)', default=1.15, min=0.6, max=2, update=redraw)
 	center_radius: FloatProperty(name='Scale Ring Radius', default=0.16, min=0.1, max=0.3, update=redraw)
 	center_line_width: FloatProperty(name='Scale Ring Width', default=3.75, min=1, max=12,
