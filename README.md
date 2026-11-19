@@ -70,6 +70,11 @@ Gizmo quick hide.
 
 ## 🌘 Change Log
 
+### 1.6.0
+
+* Performance improvements.
+* Special thanks YAZZ for all the testing! 
+
 ### 1.5.2
 
 * Always stay underneath existing gizmos (Ex: extrude gizmo)
