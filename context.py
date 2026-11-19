@@ -81,16 +81,24 @@ def _bounds_center(points):
 	return Vector(tuple((min(p[i] for p in points) + max(p[i] for p in points)) / 2 for i in range(3)))
 
 def pivot(context, items=None):
-	items = selection(context) if items is None else items
-	if not items:
-		return None
 	mode = context.scene.tool_settings.transform_pivot_point
+	if items is None and mode in {'CURSOR', 'ACTIVE_ELEMENT'}:
+		if not has_selection(context):
+			return None
+	else:
+		items = selection(context) if items is None else items
+	if items is not None and not items:
+		return None
 	if mode == 'CURSOR':
 		return context.scene.cursor.location.copy()
 	if mode == 'ACTIVE_ELEMENT':
 		active = active_point(context)
 		if active is not None:
 			return active
+	if items is None:
+		items = selection(context)
+		if not items:
+			return None
 	if context.mode == 'POSE':
 		points = [world_point(ob, pose_handle_bone(ob, bone)) for ob, bone in items]
 		if mode in {'BOUNDING_BOX_CENTER', 'ACTIVE_ELEMENT'}:
