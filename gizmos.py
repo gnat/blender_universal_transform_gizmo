@@ -14,7 +14,7 @@ def draw_center(context):
 	if key in _DRAW_STATE:
 		return _DRAW_STATE[key][0]
 	active = interaction.current(context)
-	return active.display_center if active else ctx.pivot(context)
+	return active.display_center if active else ctx.viewport_pivot(context)
 
 def _capture_screen_control(gizmo, context, color, alpha, width):
 	view = context.region_data
@@ -270,7 +270,7 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 			# Capture one current pose before drawing any handles or overlays.
 			# A timer/post-pixel sample leaves the handles on the previous frame.
 			active.sample()
-		center = active.display_center if active else ctx.pivot(context)
+		center = active.display_center if active else ctx.viewport_pivot(context)
 		key = (context.window.as_pointer(), context.region.as_pointer())
 		_DRAW_STATE[key] = (center, self.handles)
 		if center is None:
@@ -283,12 +283,14 @@ class UTG_GGT_universal(bpy.types.GizmoGroup):
 				gz.hide = True
 			return
 		scale = pixel * context.preferences.view.gizmo_size * p.size
-		orientation, move_basis = ctx.orientation(context)
-		scale_basis = move_basis
-		view_basis = ctx.view_basis(context)
+		orientation = context.scene.transform_orientation_slots[0].type
 		if active:
 			move_basis = active.draw_move_basis
 			scale_basis = active.draw_scale_basis
+		else:
+			orientation, move_basis = ctx.viewport_orientation(context)
+			scale_basis = move_basis
+		view_basis = ctx.view_basis(context)
 		axis_colors = settings.colors(context)
 		view_normal = view_basis.col[2]
 		if context.region_data.is_perspective:

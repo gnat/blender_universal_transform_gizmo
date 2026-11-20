@@ -2,7 +2,7 @@
 """Universal Transform Gizmo"""
 
 import bpy
-from . import settings, interaction, gizmos, controls, keymaps
+from . import settings, interaction, gizmos, controls, keymaps, context
 
 # Blender picks groups in registration order and draws them in reverse.
 _CLASSES = (*settings.CLASSES, *interaction.CLASSES, *gizmos.CLASSES, *controls.CLASSES,
@@ -23,8 +23,10 @@ def register():
 	)
 	bpy.types.VIEW3D_HT_header.append(settings.draw_header)
 	keymaps.register()
+	context.register_cache_handlers()
 
 def unregister():
+	context.unregister_cache_handlers()
 	interaction.shutdown()
 	keymaps.unregister()
 	gizmos.clear_draw_state()

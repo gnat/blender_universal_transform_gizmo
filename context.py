@@ -2,10 +2,75 @@
 """Selection, pivot and orientation helpers. Coordinates here are world space."""
 import bpy
 import bmesh
+from bpy.app.handlers import persistent
 from mathutils import Matrix, Quaternion, Vector
 
 AXES = (Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)))
 SUPPORTED_MODES = {'OBJECT', 'EDIT_MESH', 'POSE'}
+
+_VIEWPORT_CACHE = {}
+
+@persistent
+def clear_viewport_cache(scene=None, depsgraph=None):
+	if depsgraph is None or any(depsgraph.updates):
+		_VIEWPORT_CACHE.clear()
+
+_CACHE_HANDLERS = (
+	bpy.app.handlers.depsgraph_update_post,
+	bpy.app.handlers.undo_post,
+	bpy.app.handlers.redo_post,
+	bpy.app.handlers.load_pre,
+	bpy.app.handlers.load_post,
+)
+
+def register_cache_handlers():
+	clear_viewport_cache()
+	for handlers in _CACHE_HANDLERS:
+		if clear_viewport_cache not in handlers:
+			handlers.append(clear_viewport_cache)
+
+def unregister_cache_handlers():
+	for handlers in _CACHE_HANDLERS:
+		if clear_viewport_cache in handlers:
+			handlers.remove(clear_viewport_cache)
+	clear_viewport_cache()
+
+def _mesh_signature(ob):
+	mesh = ob.data
+	bm = bmesh.from_edit_mesh(mesh)
+	return (ob.as_pointer(), mesh.as_pointer(), len(bm.verts), len(bm.edges), len(bm.faces),
+			mesh.total_vert_sel, mesh.total_edge_sel, mesh.total_face_sel,
+			hash(bm.select_history.active), hash(bm.faces.active),
+			tuple(tuple(row) for row in ob.matrix_world))
+
+def _cache_entry(context):
+	key = (context.scene.as_pointer(), context.view_layer.as_pointer())
+	signature = (context.mode, context.active_object.as_pointer(),
+				context.scene.tool_settings.transform_pivot_point,
+				tuple(context.tool_settings.mesh_select_mode),
+				tuple(_mesh_signature(ob) for ob in context.objects_in_mode_unique_data if ob.type == 'MESH'))
+	entry = _VIEWPORT_CACHE.get(key)
+	if entry is None or entry['signature'] != signature:
+		entry = {'signature': signature}
+		_VIEWPORT_CACHE[key] = entry
+	return entry
+
+def viewport_pivot(context):
+	if context.mode != 'EDIT_MESH' or context.scene.tool_settings.transform_pivot_point in {'CURSOR', 'ACTIVE_ELEMENT'}:
+		return pivot(context)
+	entry = _cache_entry(context)
+	if 'pivot' not in entry:
+		entry['pivot'] = pivot(context)
+	return entry['pivot']
+
+def viewport_orientation(context):
+	slot = context.scene.transform_orientation_slots[0]
+	if context.mode != 'EDIT_MESH' or slot.type != 'NORMAL' or slot.custom_orientation:
+		return orientation(context)
+	entry = _cache_entry(context)
+	if 'orientation' not in entry:
+		entry['orientation'] = orientation(context)
+	return entry['orientation']
 
 class Selection(list):
 	"""Keep wrapped edit BMeshes alive as long as their vertex wrappers are used."""
