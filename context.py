@@ -45,7 +45,7 @@ def _mesh_signature(ob):
 
 def _cache_entry(context):
 	key = (context.scene.as_pointer(), context.view_layer.as_pointer())
-	signature = (context.mode, context.active_object.as_pointer(),
+	signature = (context.active_object.as_pointer(),
 				context.scene.tool_settings.transform_pivot_point,
 				tuple(context.tool_settings.mesh_select_mode),
 				tuple(_mesh_signature(ob) for ob in context.objects_in_mode_unique_data if ob.type == 'MESH'))
