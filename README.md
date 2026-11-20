@@ -70,6 +70,11 @@ Gizmo quick hide.
 
 ## 🌘 Change Log
 
+### 1.6.4
+
+* Performance improvements. More caching.
+* Special thanks YAZZ, brite for all the testing! 
+
 ### 1.6.0
 
 * Performance improvements.
